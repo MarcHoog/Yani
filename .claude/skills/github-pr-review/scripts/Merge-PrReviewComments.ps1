@@ -73,7 +73,8 @@ foreach ($model in 'sonnet', 'opus') {
 
     try {
         $canonText = "$($canonical.body)".TrimEnd()
-        $rounds    = [regex]::Matches($canonText, '(?m)^### Round \d+ - head').Count
+        # Only the exact shape this script emits, so reviewer prose quoting a marker is not counted.
+        $rounds    = [regex]::Matches($canonText, '(?m)^### Round \d+ - head `[0-9a-f]{7}`\s*$').Count
         $verdict   = $null
 
         # Validate every duplicate before touching the PR.
@@ -105,9 +106,14 @@ foreach ($model in 'sonnet', 'opus') {
                     throw "Canonical comment $($canonical.id) would grow to $($newBody.Length) chars (max $script:GitHubCommentMaxLength) - duplicate $($w.Dupe.id) left in place."
                 }
                 $patched = Invoke-GitHub -Uri (Get-GitHubRepoPath -Path "/issues/comments/$($canonical.id)") -Method PATCH -Body @{ body = $newBody }
-                if (-not $patched.id) { throw "PATCH of canonical comment $($canonical.id) returned no id - duplicate $($w.Dupe.id) left in place." }
+                # The duplicate is the only surviving copy of this round: delete it only once the
+                # returned body proves the append landed. A concurrent overwrite shows up here.
+                $landed = "$($patched.body)"
+                if (-not ($landed.Contains((Get-RoundMarker -Round $round -Head $w.Head)) -and $landed.Contains($w.Stripped))) {
+                    throw "PATCH of canonical comment $($canonical.id) did not return the appended round $round - duplicate $($w.Dupe.id) left in place."
+                }
                 $entry.appended += @{ round = $round; head = $w.Head; from = $w.Dupe.id }
-                $canonText = $newBody
+                $canonText = $landed.TrimEnd()
                 $rounds++
             }
 

@@ -31,7 +31,8 @@ $pattern    = Join-Path $repoRoot '.claude' 'worktrees' 'ai-review-*'
 
 if ($Stale) {
     $cutoff = (Get-Date).AddHours(-$OlderThanHours)
-    $Path = @($registered | Where-Object { $_ -like $pattern -and (Test-Path $_) -and (Get-Item $_).CreationTime -lt $cutoff })
+    # A registered worktree whose directory is already gone is the classic leftover: always stale.
+    $Path = @($registered | Where-Object { $_ -like $pattern -and (-not (Test-Path $_) -or (Get-Item $_).CreationTime -lt $cutoff) })
 }
 
 $removed = @(); $skipped = @()
@@ -39,7 +40,7 @@ foreach ($p in $Path) {
     $full = [IO.Path]::GetFullPath($p).TrimEnd('\')
     if ($registered -notcontains $full) { $skipped += @{ path = $full; reason = 'not a registered worktree' }; continue }
     if ($full -notlike $pattern) { $skipped += @{ path = $full; reason = 'not an ai-review worktree' }; continue }
-    if (git -C $full status --porcelain) { $skipped += @{ path = $full; reason = 'local changes' }; continue }
+    if ((Test-Path $full) -and (git -C $full status --porcelain)) { $skipped += @{ path = $full; reason = 'local changes' }; continue }
     git -C $repoRoot worktree remove $full --force
     if ($LASTEXITCODE) { $skipped += @{ path = $full; reason = "git worktree remove failed ($LASTEXITCODE)" }; continue }
     $removed += $full

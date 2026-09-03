@@ -25,7 +25,7 @@
     PR head the review was written against - from the reviewer's prompt.
 
 .OUTPUTS
-    JSON: commentId, url, verdict, head.
+    JSON: prNumber, model, commentId, url, verdict, head.
 #>
 [CmdletBinding()]
 param(
@@ -42,7 +42,6 @@ $age = (Get-Date) - (Get-Item $ReviewFile).LastWriteTime
 if ($age.TotalMinutes -gt 60) { throw "Review file $ReviewFile was written $([int]$age.TotalMinutes) min ago - stale; write this round's review first." }
 $markdown = "$(Get-Content -Path $ReviewFile -Raw -Encoding utf8)".TrimEnd()
 if (-not $markdown) { throw "Review file is empty: $ReviewFile" }
-if ($markdown.Length -gt $script:GitHubCommentMaxLength) { throw "Review is $($markdown.Length) chars; GitHub comments max $script:GitHubCommentMaxLength. Trim the findings." }
 
 $firstLine = ($markdown -split "`r?`n", 2)[0].Trim()
 if ($firstLine -ne "## AI review - $Model") {
@@ -52,6 +51,8 @@ $verdict = Get-ReviewVerdict -Markdown $markdown
 if ($markdown -match $script:AiReviewHeadPattern) { throw 'Review file already carries an ai-review head marker - the script adds it, do not write it yourself.' }
 $shortSha = $HeadSha.Substring(0, 7).ToLower()
 $markdown = $markdown + "`n`n<!-- ai-review head:$shortSha -->"
+# Checked after the marker so the length tested is the length posted.
+if ($markdown.Length -gt $script:GitHubCommentMaxLength) { throw "Review is $($markdown.Length) chars incl. head marker; GitHub comments max $script:GitHubCommentMaxLength. Trim the findings." }
 
 $comment = Invoke-GitHub -Uri (Get-GitHubRepoPath -Path "/issues/$PrNumber/comments") -Method POST -Body @{ body = $markdown }
 if (-not $comment.id) { throw 'GitHub returned no comment id.' }

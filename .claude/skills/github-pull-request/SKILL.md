@@ -149,8 +149,7 @@ Log of the failed job (endpoint redirects to plain text; `Invoke-WebRequest` fol
 ```powershell
 $jobs = (Invoke-GitHub (Get-GitHubRepoPath "/actions/runs/{runId}/jobs")).jobs
 $job  = $jobs | Where-Object conclusion -eq 'failure' | Select-Object -First 1
-$h = Get-GitHubHeaders
-Invoke-WebRequest -Uri "https://api.github.com$(Get-GitHubRepoPath "/actions/jobs/$($job.id)/logs")" -Headers $h -OutFile "$env:TEMP\job-log.txt"
+Invoke-WebRequest -Uri "https://api.github.com$(Get-GitHubRepoPath "/actions/jobs/$($job.id)/logs")" -Headers (Get-GitHubHeaders) -OutFile "$env:TEMP\job-log.txt"
 ```
 
 Whole run as zip: `/actions/runs/{runId}/logs`.
