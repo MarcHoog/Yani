@@ -29,6 +29,21 @@ test('toggling stores an explicit choice', async () => {
   expect(document.documentElement.dataset.theme).toBe('light')
 })
 
+test('every toggle on the page follows the same choice', async () => {
+  localStorage.setItem('theme', 'light')
+  const screen = await render(
+    <>
+      <ThemeToggle />
+      <ThemeToggle />
+    </>,
+  )
+
+  await screen.getByRole('button', { name: 'Switch to dark mode' }).first().click()
+
+  await expect.element(screen.getByRole('button', { name: 'Switch to light mode' }).nth(1)).toBeVisible()
+  expect(screen.getByRole('button', { name: 'Switch to light mode' }).elements()).toHaveLength(2)
+})
+
 test('set(system) clears the stored choice', async () => {
   localStorage.setItem('theme', 'dark')
   const { result, act } = await renderHook(() => useTheme())

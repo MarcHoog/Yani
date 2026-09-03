@@ -33,6 +33,11 @@ of the change.
 
 After a PR is created or updated with new commits. Launch automatically; do not ask.
 
+One round per batch, not per fix. Before pushing, apply every fix you intend to make for the current
+findings (code, tests, docs) locally and push them as one commit or one push. A round runs two cold
+agents for about five minutes; pushing one fix at a time and re-reviewing each multiplies that for no gain.
+Docs-only follow-ups belong in the same batch as the code they describe.
+
 Run it from a checkout on `main` (the primary checkout, or a worktree of `main`), not from the
 PR branch. `scripts` and `agentDef` are taken from the launching checkout, and when that is the
 PR branch the PR supplies its own review rules. Bootstrapping this tooling was the one exception.

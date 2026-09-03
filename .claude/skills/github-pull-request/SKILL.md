@@ -98,6 +98,9 @@ scripts collect the PR context and create two worktrees on the PR head, two cold
 `github-pr-reviewer` agents (Sonnet + Opus) each post one structured comment, and on a
 re-review a script folds the new round into the existing comment per model.
 
+Batch before you push: address all current findings and related docs locally, then push once. Every
+push costs one full review round, so one fix per push is the wrong cadence.
+
 ## List open PRs
 
 ```powershell

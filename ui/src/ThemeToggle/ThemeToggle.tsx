@@ -1,39 +1,52 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useSyncExternalStore } from 'react'
 import './ThemeToggle.css'
 
 export type Theme = 'light' | 'dark'
 export type ThemePreference = Theme | 'system'
 
 const KEY = 'theme'
-const osDark = matchMedia('(prefers-color-scheme: dark)')
+const listeners = new Set<() => void>()
 
 function readPreference(): ThemePreference {
   const stored = localStorage.getItem(KEY)
   return stored === 'light' || stored === 'dark' ? stored : 'system'
 }
 
-export function useTheme() {
-  const [preference, setPreference] = useState<ThemePreference>(readPreference)
-  const [systemDark, setSystemDark] = useState(osDark.matches)
-  const resolved: Theme = preference === 'system' ? (systemDark ? 'dark' : 'light') : preference
+function readResolved(): Theme {
+  const preference = readPreference()
+  if (preference !== 'system') return preference
+  return matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+}
 
-  useEffect(() => {
-    const onChange = (e: MediaQueryListEvent) => setSystemDark(e.matches)
-    osDark.addEventListener('change', onChange)
-    return () => osDark.removeEventListener('change', onChange)
-  }, [])
+function notify() {
+  for (const listener of listeners) listener()
+}
+
+function subscribe(listener: () => void) {
+  listeners.add(listener)
+  const osDark = matchMedia('(prefers-color-scheme: dark)')
+  osDark.addEventListener('change', notify)
+  return () => {
+    listeners.delete(listener)
+    osDark.removeEventListener('change', notify)
+  }
+}
+
+export function setTheme(next: ThemePreference) {
+  if (next === 'system') localStorage.removeItem(KEY)
+  else localStorage.setItem(KEY, next)
+  notify()
+}
+
+export function useTheme() {
+  const preference = useSyncExternalStore(subscribe, readPreference)
+  const resolved = useSyncExternalStore(subscribe, readResolved)
 
   useEffect(() => {
     document.documentElement.dataset.theme = resolved
   }, [resolved])
 
-  function set(next: ThemePreference) {
-    if (next === 'system') localStorage.removeItem(KEY)
-    else localStorage.setItem(KEY, next)
-    setPreference(next)
-  }
-
-  return { preference, resolved, set }
+  return { preference, resolved, set: setTheme }
 }
 
 export function ThemeToggle() {
