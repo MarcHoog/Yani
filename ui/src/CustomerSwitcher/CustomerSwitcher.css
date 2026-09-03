@@ -1,0 +1,89 @@
+.y-customer {
+  position: relative;
+}
+
+.y-customer-current {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas:
+    'label chevron'
+    'name chevron';
+  align-items: center;
+  column-gap: 8px;
+  padding: 8px 10px;
+  text-align: left;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background-color: var(--surface-subtle);
+  color: var(--text);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.y-customer-current:hover,
+.y-customer-current[aria-expanded='true'] {
+  border-color: var(--border-strong);
+  background-color: var(--surface-hover);
+}
+
+.y-customer-label {
+  grid-area: label;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.y-customer-name {
+  grid-area: name;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-h);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.y-customer-chevron {
+  grid-area: chevron;
+  color: var(--text-muted);
+}
+
+.y-customer-list {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background-color: var(--surface);
+  box-shadow: var(--shadow-lg);
+}
+
+.y-customer-option {
+  padding: 7px 10px;
+  text-align: left;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: none;
+  font-size: 0.86rem;
+  font-weight: 500;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.y-customer-option:hover {
+  color: var(--text-h);
+  background-color: var(--surface-hover);
+}
+
+.y-customer-option[aria-selected='true'] {
+  color: var(--accent);
+  background-color: var(--accent-dim);
+}

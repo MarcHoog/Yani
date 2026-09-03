@@ -1,0 +1,111 @@
+.g-shell {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  min-height: 100vh;
+}
+
+.g-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px 12px;
+  background-color: var(--surface);
+  border-right: 1px solid var(--border);
+}
+
+.g-brand {
+  padding: 4px 8px;
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-h);
+}
+
+.g-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.g-group-title {
+  padding: 0 10px 4px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.g-link {
+  text-align: left;
+  padding: 6px 10px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: none;
+  font-size: 0.86rem;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.g-link:hover {
+  color: var(--text-h);
+  background-color: var(--surface-hover);
+}
+
+.g-link[aria-current] {
+  color: var(--accent);
+  background-color: var(--accent-dim);
+}
+
+.g-main {
+  display: flex;
+  flex-direction: column;
+}
+
+.g-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.g-modes {
+  display: flex;
+  gap: 4px;
+}
+
+.g-mode {
+  padding: 3px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background-color: var(--surface);
+  font-size: 0.78rem;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.g-mode[aria-pressed='true'] {
+  color: var(--accent);
+  border-color: var(--border-accent);
+  background-color: var(--accent-dim);
+}
+
+.g-panes {
+  flex: 1;
+  display: flex;
+}
+
+.g-pane {
+  flex: 1;
+  padding: 24px;
+  background-color: var(--bg);
+  color: var(--text);
+  overflow: auto;
+}
+
+.g-pane + .g-pane {
+  border-left: 1px solid var(--border);
+}

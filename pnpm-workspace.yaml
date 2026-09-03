@@ -1,0 +1,4 @@
+packages:
+  - ui
+minimumReleaseAgeExclude:
+  - '@types/react-dom@19.2.7'

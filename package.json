@@ -1,0 +1,8 @@
+{
+  "name": "yani",
+  "private": true,
+  "packageManager": "pnpm@11.25.0",
+  "scripts": {
+    "ui": "pnpm --filter @yani/ui"
+  }
+}
