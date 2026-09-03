@@ -33,6 +33,10 @@ of the change.
 
 After a PR is created or updated with new commits. Launch automatically; do not ask.
 
+Run it from a checkout on `main` (the primary checkout, or a worktree of `main`), not from the
+PR branch. `scripts` and `agentDef` are taken from the launching checkout, and when that is the
+PR branch the PR supplies its own review rules. Bootstrapping this tooling was the one exception.
+
 ## Step 1 - context
 
 ```powershell

@@ -131,10 +131,10 @@ foreach ($model in 'sonnet', 'opus') {
 # Verify: deleted duplicates now 404; canonical body carries every round marker (with its head)
 # appended this run and the Latest line names the newest one. A failure here must not swallow
 # the report of what already landed.
-try {
-    foreach ($model in 'sonnet', 'opus') {
-        $entry = $report[$model]
-        if (-not $entry.canonical -or $entry.error) { continue }
+foreach ($model in 'sonnet', 'opus') {
+    $entry = $report[$model]
+    if (-not $entry.canonical -or $entry.error) { continue }
+    try {
         $canon = Invoke-GitHub -Uri (Get-GitHubRepoPath -Path "/issues/comments/$($entry.canonical)")
         $body  = "$($canon.body)"
         $last  = $null
@@ -149,10 +149,10 @@ try {
             try { Invoke-GitHub -Uri (Get-GitHubRepoPath -Path "/issues/comments/$id") | Out-Null } catch { if ($_.Exception.Message -match 'GitHub 404') { $gone = $true } }
             if (-not $gone) { $entry.verified = $false }
         }
-    }
-} catch {
-    foreach ($model in 'sonnet', 'opus') {
-        if ($report[$model].canonical) { $report[$model].verified = $null; $report[$model].verifyError = $_.Exception.Message }
+    } catch {
+        # Per model: a transient failure verifying one must not mark the other unverified.
+        $entry.verified    = $null
+        $entry.verifyError = $_.Exception.Message
     }
 }
 

@@ -54,8 +54,9 @@ removed after you report. Never touch the other reviewer's comment.
    `ruff.toml`, `conftest.py`, `vitest.config.*`, `vite.config.*`, `tsconfig*.json`, the
    `scripts` block of `package.json`) - then the PR would be choosing how it gets checked.
 6. Write the review markdown (structure below) to a file named with the head sha, then post it.
-   Always via the Write tool to a file under `$env:TEMP` - never a double-quoted here-string,
-   reviews quote PowerShell and `"$var"` expands to nothing:
+   Always via the Write tool - never a double-quoted here-string, reviews quote PowerShell and
+   `"$var"` expands to nothing. The Write tool does not expand `$env:TEMP`: resolve it first
+   (`$env:TEMP` in the PowerShell tool) and pass the absolute path to Write, then post:
    ```powershell
    & "<scripts>\Post-PrReview.ps1" -PrNumber <prNumber> -Model <model> -HeadSha <head> -ReviewFile "$env:TEMP\ai-review-<prNumber>-<model>-<first 7 of head>.md"
    ```

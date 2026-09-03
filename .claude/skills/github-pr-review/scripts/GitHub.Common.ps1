@@ -16,6 +16,7 @@ $script:GitHub = @{
     Repo       = $null
 }
 $script:GitHubHeaders = $null
+$script:GitHubLogin   = $null
 $script:AiReviewHeaderPattern = '^## AI review - (sonnet|opus)\b'
 $script:AiReviewHeadPattern   = '<!-- ai-review head:([0-9a-f]{7,40}) -->'
 $script:GitHubCommentMaxLength = 65536
@@ -107,14 +108,24 @@ function Get-GitHubPaged {
     } while ($chunk.Count -eq 100)
 }
 
+function Get-GitHubLogin {
+    <# Login of the user the cached token belongs to - the author of every AI review comment. #>
+    if (-not $script:GitHubLogin) { $script:GitHubLogin = (Invoke-GitHub -Uri '/user').login }
+    $script:GitHubLogin
+}
+
 function Get-AiReviewComments {
     <#
-    Returns the PR's AI review comments (issue comments whose body starts with
-    '## AI review - <model>'), oldest first. Each object gains a Model property.
+    Returns the PR's AI review comments: issue comments authored by the token's own user whose
+    body starts with '## AI review - <model>', oldest first. Each object gains a Model property.
+    A human comment that happens to start with the header is never picked up (it would otherwise
+    be merged and deleted).
     #>
     param([Parameter(Mandatory)][int]$PrNumber)
+    $login    = Get-GitHubLogin
     $comments = @(Get-GitHubPaged -Path (Get-GitHubRepoPath -Path "/issues/$PrNumber/comments"))
     foreach ($c in ($comments | Sort-Object id)) {
+        if ($c.user.login -ne $login) { continue }
         $first = ("$($c.body)" -split "`r?`n", 2)[0].Trim()
         if ($first -match $script:AiReviewHeaderPattern) {
             $c | Add-Member -NotePropertyName Model -NotePropertyValue $Matches[1] -Force
