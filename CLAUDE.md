@@ -36,6 +36,7 @@ Preferred: run `.\claude.ps1` before starting Claude. It toggles `CLAUDE_CONFIG_
 | UIs | Two: staff portal (SSOT admin + ticketing) and customer portal (read-only view + tickets + self-service) |
 | Gateway | Traefik. Portals call APIs via gateway hostnames, same URLs dev and prod. |
 | Identity | Zitadel container. Services validate JWT via JWKS only. Local users seeded for dev. |
+| Login UI | Zitadel hosted login, branded to the theme (logo, colors, font). Portals redirect, never render credential forms. No custom login UI. |
 | Automations | Mock executor first, Prefect server container later. Keep executor interface stable. |
 | API contract | OpenAPI from FastAPI. TS clients generated, never hand-written. |
 | Shared code | Python shared package (auth/JWT, settings, logging, db clients). React component library. |

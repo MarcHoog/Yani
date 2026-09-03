@@ -5,6 +5,7 @@ Living document. Grows as decisions are made. Nothing here is implemented yet.
 ## 1. System overview
 
 Who talks to what. Every box is a container in one `docker compose` stack.
+Login is Zitadel's hosted page, branded to the portal theme. Portals only redirect to it and never render credential forms.
 
 ```mermaid
 flowchart LR
