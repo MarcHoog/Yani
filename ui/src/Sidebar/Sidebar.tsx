@@ -9,12 +9,11 @@ export type SidebarProps = {
   brand: string
   tag?: string
   groups: SidebarGroup[]
-  user?: string
   children?: ReactNode
   onNavigate?: (href: string) => void
 }
 
-export function Sidebar({ brand, tag, groups, user, children, onNavigate }: SidebarProps) {
+export function Sidebar({ brand, tag, groups, children, onNavigate }: SidebarProps) {
   function click(e: MouseEvent<HTMLAnchorElement>, href: string) {
     if (!onNavigate || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return
     e.preventDefault()
@@ -24,9 +23,8 @@ export function Sidebar({ brand, tag, groups, user, children, onNavigate }: Side
   return (
     <aside className="y-sidebar">
       <div className="y-sidebar-brand">
-        <span className="y-sidebar-dot" />
-        <span>{brand}</span>
-        {tag && <span className="y-sidebar-tag">{tag}</span>}
+        <span className="y-sidebar-brand-name">{brand}</span>
+        {tag && <span className="y-sidebar-brand-tag">{tag}</span>}
       </div>
 
       {children}
@@ -53,7 +51,6 @@ export function Sidebar({ brand, tag, groups, user, children, onNavigate }: Side
 
       <div className="y-sidebar-footer">
         <ThemeToggle />
-        {user && <span className="y-sidebar-user mono">{user}</span>}
       </div>
     </aside>
   )

@@ -12,29 +12,21 @@
 
 .y-sidebar-brand {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 4px 8px;
-  font-size: 0.95rem;
-  font-weight: 600;
+  align-items: baseline;
+  gap: 6px;
+  padding: 6px 10px 10px;
+  font-size: 1.05rem;
+  letter-spacing: -0.01em;
+}
+
+.y-sidebar-brand-name {
+  font-weight: 700;
   color: var(--text-h);
 }
 
-.y-sidebar-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 3px;
-  background-color: var(--accent);
-}
-
-.y-sidebar-tag {
-  padding: 1px 6px;
-  border-radius: 4px;
-  font-family: var(--mono);
-  font-size: 0.7rem;
-  font-weight: 600;
-  color: var(--accent);
-  background-color: var(--accent-dim);
+.y-sidebar-brand-tag {
+  font-weight: 500;
+  color: var(--text-muted);
 }
 
 .y-sidebar-nav {
@@ -93,13 +85,5 @@
 
 .y-sidebar-footer {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
   padding: 0 4px;
-}
-
-.y-sidebar-user {
-  font-size: 0.72rem;
-  color: var(--text-muted);
 }

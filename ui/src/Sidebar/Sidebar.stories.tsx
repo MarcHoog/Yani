@@ -19,13 +19,13 @@ const tickets: SidebarGroup[] = [
 
 export const Default = () => (
   <div style={frame}>
-    <Sidebar brand="Yani" tag="SSOT" groups={ssot} user="marc (admin)" />
+    <Sidebar brand="Yani" tag="SSOT" groups={ssot} />
   </div>
 )
 
 export const WithBadge = () => (
   <div style={frame}>
-    <Sidebar brand="Yani" tag="Tickets" groups={tickets} user="marc (admin)" />
+    <Sidebar brand="Yani" tag="Tickets" groups={tickets} />
   </div>
 )
 
