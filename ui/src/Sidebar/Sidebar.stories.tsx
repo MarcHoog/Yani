@@ -1,8 +1,16 @@
+import { CustomerSwitcher } from '../CustomerSwitcher/CustomerSwitcher'
 import { Sidebar, type SidebarGroup } from './Sidebar'
 
 export default { title: 'Sidebar' }
 
-const frame = { height: 640, display: 'flex', background: 'var(--bg)' }
+const frame = { height: 720, display: 'flex', background: 'var(--bg)' }
+const noop = () => {}
+
+const customers = [
+  { id: 'cookiecooker', name: 'CookieCooker' },
+  { id: 'brouwerij-de-kroon', name: 'Brouwerij De Kroon' },
+  { id: 'vanderveen-advocaten', name: 'Vanderveen Advocaten' },
+]
 
 const ssot: SidebarGroup[] = [
   { items: [{ label: 'Overview', href: '/', active: true }] },
@@ -19,13 +27,17 @@ const tickets: SidebarGroup[] = [
 
 export const Default = () => (
   <div style={frame}>
-    <Sidebar brand="Yani" tag="SSOT" groups={ssot} />
+    <Sidebar brand="Yani" tag="SSOT" groups={ssot}>
+      <CustomerSwitcher customers={customers} currentId="cookiecooker" onSelect={noop} />
+    </Sidebar>
   </div>
 )
 
 export const WithBadge = () => (
   <div style={frame}>
-    <Sidebar brand="Yani" tag="Tickets" groups={tickets} />
+    <Sidebar brand="Yani" tag="Tickets" groups={tickets}>
+      <CustomerSwitcher customers={customers} currentId="brouwerij-de-kroon" onSelect={noop} />
+    </Sidebar>
   </div>
 )
 

@@ -15,7 +15,7 @@ export type SidebarProps = {
 
 export function Sidebar({ brand, tag, groups, children, onNavigate }: SidebarProps) {
   function click(e: MouseEvent<HTMLAnchorElement>, href: string) {
-    if (!onNavigate || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return
+    if (!onNavigate || !href.startsWith('/') || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return
     e.preventDefault()
     onNavigate(href)
   }

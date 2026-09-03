@@ -12,6 +12,7 @@ export function screenshotStories({ default: meta, ...variants }: Stories) {
         document.documentElement.dataset.theme = theme
         const screen = await render(<Story />)
         screen.container.style.pointerEvents = 'none'
+        await document.fonts.ready
         await expect(screen.locator).toMatchScreenshot(`${name}-${theme}`)
       })
     }
