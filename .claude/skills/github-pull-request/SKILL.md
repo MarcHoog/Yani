@@ -93,10 +93,17 @@ Write-Host "PR #$($pr.number): $($pr.html_url)"
 
 ## After creating (or updating) a PR
 
-Run the local dual-model review without asking: follow the `github-pr-review` skill - its
-scripts collect the PR context and create two worktrees on the PR head, two cold
-`github-pr-reviewer` agents (Sonnet + Opus) each post one structured comment, and on a
-re-review a script folds the new round into the existing comment per model.
+Never launch the AI review on your own. After every PR create or push, report the PR url and ask
+the user this question verbatim, then stop and wait for the answer:
+
+```
+Start AI review of PR #<n>?
+```
+
+Background job: put it on the `needs input:` line. Interactive: AskUserQuestion. Only an explicit
+yes starts the `github-pr-review` skill - "review it", "run the reviewers", "yes" all count; silence,
+a different task, or a push alone never do. The review skill owns the loop from there (max 3
+review + self-fix rounds per yes, then it asks the same question again).
 
 Batch before you push: address all current findings and related docs locally, then push once. Every
 push costs one full review round, so one fix per push is the wrong cadence.
@@ -176,4 +183,4 @@ GitHub links it automatically; no API call needed.
 3. PR created with a conventional `type(scope): summary` title and the Plan / Changes / Remaining body.
 4. Issue referenced in the body if one exists.
 5. On resume: body PATCHed with latest progress.
-6. `github-pr-review` reviewers launched after the push without asking; PR left with one AI comment per model.
+6. After the push: asked `Start AI review of PR #<n>?` verbatim and stopped. Review launched only on an explicit yes.
