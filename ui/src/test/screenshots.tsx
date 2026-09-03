@@ -8,6 +8,7 @@ export function screenshotStories({ default: meta, ...variants }: Stories) {
   for (const [name, Story] of Object.entries(variants) as [string, ComponentType][]) {
     for (const theme of ['light', 'dark'] as const) {
       test(`${meta.title}/${name} ${theme}`, async () => {
+        localStorage.setItem('theme', theme)
         document.documentElement.dataset.theme = theme
         const screen = await render(<Story />)
         screen.container.style.pointerEvents = 'none'

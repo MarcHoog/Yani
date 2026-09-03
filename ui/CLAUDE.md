@@ -40,4 +40,5 @@ gallery\                      dev page, discovers *.stories.tsx
 - No router, no fetch, no global state here. Navigation is `href` plus `onNavigate` callback. Portals wire the router.
 - Screenshot baselines live in `__screenshots__` next to the test and are committed. Rendered on Windows. Regenerate on the same OS.
 - Themes switch on `[data-theme]`, on any element, not only `html`. Gallery uses this to show both at once.
+- Theme preference is three-state: `system` (default, follows OS, nothing stored), `light`, `dark` (stored in `localStorage.theme`). `useTheme()` owns this. Portals copy the head script from `index.html` so the attribute is set before first paint.
 - Code must read without comments. If a component needs a comment block, split it.

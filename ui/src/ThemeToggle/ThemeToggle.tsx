@@ -2,32 +2,50 @@ import { useEffect, useState } from 'react'
 import './ThemeToggle.css'
 
 export type Theme = 'light' | 'dark'
+export type ThemePreference = Theme | 'system'
 
-function readTheme(): Theme {
-  return document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light'
+const KEY = 'theme'
+const osDark = matchMedia('(prefers-color-scheme: dark)')
+
+function readPreference(): ThemePreference {
+  const stored = localStorage.getItem(KEY)
+  return stored === 'light' || stored === 'dark' ? stored : 'system'
 }
 
 export function useTheme() {
-  const [theme, setTheme] = useState<Theme>(readTheme)
+  const [preference, setPreference] = useState<ThemePreference>(readPreference)
+  const [systemDark, setSystemDark] = useState(osDark.matches)
+  const resolved: Theme = preference === 'system' ? (systemDark ? 'dark' : 'light') : preference
 
   useEffect(() => {
-    document.documentElement.dataset.theme = theme
-    localStorage.setItem('theme', theme)
-  }, [theme])
+    const onChange = (e: MediaQueryListEvent) => setSystemDark(e.matches)
+    osDark.addEventListener('change', onChange)
+    return () => osDark.removeEventListener('change', onChange)
+  }, [])
 
-  return { theme, toggle: () => setTheme((t) => (t === 'light' ? 'dark' : 'light')) }
+  useEffect(() => {
+    document.documentElement.dataset.theme = resolved
+  }, [resolved])
+
+  function set(next: ThemePreference) {
+    if (next === 'system') localStorage.removeItem(KEY)
+    else localStorage.setItem(KEY, next)
+    setPreference(next)
+  }
+
+  return { preference, resolved, set }
 }
 
 export function ThemeToggle() {
-  const { theme, toggle } = useTheme()
-  const dark = theme === 'dark'
+  const { resolved, set } = useTheme()
+  const dark = resolved === 'dark'
 
   return (
     <button
       type="button"
       className="y-theme-toggle"
       aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'}
-      onClick={toggle}
+      onClick={() => set(dark ? 'light' : 'dark')}
     >
       <svg
         width="16"
