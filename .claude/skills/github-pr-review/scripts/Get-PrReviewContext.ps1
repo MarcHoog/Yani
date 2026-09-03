@@ -24,6 +24,7 @@ $ErrorActionPreference = 'Stop'
 $repoRoot = Get-MainRepoRoot
 
 $pr = Invoke-GitHub -Uri (Get-GitHubRepoPath -Path "/pulls/$PrNumber")
+if (-not $pr.head.repo) { throw "PR #$PrNumber head repository no longer exists (deleted fork or repo) - nothing to review." }
 if ($pr.head.repo.full_name -ne $pr.base.repo.full_name) {
     throw "PR #$PrNumber comes from a fork ($($pr.head.repo.full_name)) - fork PRs are not supported by this review flow."
 }

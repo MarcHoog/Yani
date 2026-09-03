@@ -144,13 +144,16 @@ $checks = (Invoke-GitHub (Get-GitHubRepoPath "/commits/$($pr.head.sha)/check-run
 $checks | ForEach-Object { "$($_.name): $($_.status) ($($_.conclusion))" }
 ```
 
-Job log (returns a redirect to a zip; download it):
+Log of the failed job (endpoint redirects to plain text; `Invoke-WebRequest` follows it):
 
 ```powershell
 $jobs = (Invoke-GitHub (Get-GitHubRepoPath "/actions/runs/{runId}/jobs")).jobs
+$job  = $jobs | Where-Object conclusion -eq 'failure' | Select-Object -First 1
 $h = Get-GitHubHeaders
-Invoke-WebRequest -Uri "https://api.github.com$(Get-GitHubRepoPath "/actions/jobs/$($jobs[-1].id)/logs")" -Headers $h -OutFile "$env:TEMP\job-log.txt"
+Invoke-WebRequest -Uri "https://api.github.com$(Get-GitHubRepoPath "/actions/jobs/$($job.id)/logs")" -Headers $h -OutFile "$env:TEMP\job-log.txt"
 ```
+
+Whole run as zip: `/actions/runs/{runId}/logs`.
 
 ## Issues
 

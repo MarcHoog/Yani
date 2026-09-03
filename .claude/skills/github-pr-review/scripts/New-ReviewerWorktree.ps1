@@ -9,6 +9,9 @@
     from disk and never has to move the checkout itself. A leftover worktree from an aborted run
     at the same head is removed first when it is clean; a dirty one aborts.
 
+.PARAMETER PrNumber
+    GitHub pull request number in this repo, used only to name the path.
+
 .PARAMETER HeadSha
     Commit the worktree is detached at - the PR head from Get-PrReviewContext.ps1.
 

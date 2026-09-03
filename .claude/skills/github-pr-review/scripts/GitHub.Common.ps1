@@ -17,6 +17,7 @@ $script:GitHub = @{
 }
 $script:GitHubHeaders = $null
 $script:AiReviewHeaderPattern = '^## AI review - (sonnet|opus)\b'
+$script:AiReviewHeadPattern   = '<!-- ai-review head:([0-9a-f]{7,40}) -->'
 $script:GitHubCommentMaxLength = 65536
 
 function Get-MainRepoRoot {
@@ -77,6 +78,9 @@ function Invoke-GitHub {
         $Body
     )
     if ($Uri -notmatch '^https?://') { $Uri = $script:GitHub.ApiBase + $Uri }
+    # The bearer token pushes to the repo; never let a URL taken from payload data carry it elsewhere.
+    $uriHost = ([uri]$Uri).Host
+    if ($uriHost -ne ([uri]$script:GitHub.ApiBase).Host) { throw "Refusing to send GitHub credentials to host '$uriHost' ($Uri)." }
     $p = @{ Uri = $Uri; Method = $Method; Headers = (Get-GitHubHeaders); UseBasicParsing = $true; SkipHttpErrorCheck = $true }
     if ($null -ne $Body) {
         $p.Body        = ConvertTo-Json -InputObject $Body -Depth 10 -Compress
@@ -130,6 +134,16 @@ function Get-ReviewVerdict {
     $m = [regex]::Matches($header, '(?m)^\*\*Verdict:\*\*\s*`?(approve|comment|needs-work)`?\s*$')
     if ($m.Count -ne 1) { throw "Review header (first 6 lines) must carry exactly one '**Verdict:** <approve|comment|needs-work>' line, found $($m.Count)." }
     $m[0].Groups[1].Value
+}
+
+function Get-ReviewHead {
+    <#
+    Returns the 7-char head sha a review was written against, read from the hidden
+    '<!-- ai-review head:<sha> -->' line Post-PrReview.ps1 appends. $null when absent.
+    #>
+    param([Parameter(Mandatory)][string]$Markdown)
+    $m = [regex]::Match($Markdown, $script:AiReviewHeadPattern)
+    if ($m.Success) { $m.Groups[1].Value.Substring(0, 7).ToLower() } else { $null }
 }
 
 function Get-RegisteredWorktrees {

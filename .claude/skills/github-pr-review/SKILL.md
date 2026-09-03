@@ -18,8 +18,8 @@ tool; they print JSON.
 |--------|------|
 | `Get-PrReviewContext.ps1 -PrNumber` | branches, merge base, head, changed files, `hasPriorAiComment` |
 | `New-ReviewerWorktree.ps1 -PrNumber -HeadSha -Model` | detached worktree on the PR head, returns its path |
-| `Post-PrReview.ps1 -PrNumber -Model -ReviewFile` | run by the reviewer: validates + posts the one comment |
-| `Merge-PrReviewComments.ps1 -PrNumber -HeadSha` | folds new posts into the canonical comment per model (PATCH + delete); no-op on a first round |
+| `Post-PrReview.ps1 -PrNumber -Model -HeadSha -ReviewFile` | run by the reviewer: validates + posts the one comment, embeds the reviewed head |
+| `Merge-PrReviewComments.ps1 -PrNumber -HeadSha` | folds new posts into the canonical comment per model (PATCH + delete), updates its `**Latest:**` line; no-op on a first round |
 | `Remove-ReviewerWorktree.ps1 -Path` / `-Stale` | removes exactly the given reviewer worktrees, or clean `ai-review-*` leftovers older than 2h |
 
 GitHub issue comments have no resolved/active status like Azure DevOps threads. The verdict is
@@ -97,7 +97,9 @@ catches a reviewer that posted twice):
 ```
 
 Per model it keeps the lowest comment id, appends the new post to its body as
-`### Round N - head <sha>`, deletes the duplicate, verifies. A comment that would exceed
+`### Round N - head <sha>` (the sha embedded in that post by `Post-PrReview.ps1`, so a leftover
+from an older round keeps its own), inserts or replaces a `**Latest:** round N (head <sha>) -
+<verdict>` line under the heading, deletes the duplicate, verifies. A comment that would exceed
 GitHub's 65536-char limit is left as a duplicate and reported. Exit code 1 with an `error`
 field means it stopped part-way; the report still lists what landed, and re-running is safe.
 

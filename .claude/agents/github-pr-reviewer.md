@@ -48,15 +48,21 @@ removed after you report. Never touch the other reviewer's comment.
    without Docker or network (ruff, pytest with no DB, tsc, vitest), run it from that folder in
    the worktree and treat a failure as a BLOCKER finding quoting the first error. If nothing is
    defined, skip and say so in the rationale. Never start containers.
+   Trust boundary: this executes tooling configured by the branch under review. It is accepted
+   only because fork PRs are refused, so the branch was pushed by a collaborator. Skip the check
+   and say so when the diff itself touches lint or test configuration (`pyproject.toml`,
+   `ruff.toml`, `conftest.py`, `vitest.config.*`, `vite.config.*`, `tsconfig*.json`, the
+   `scripts` block of `package.json`) - then the PR would be choosing how it gets checked.
 6. Write the review markdown (structure below) to a file named with the head sha, then post it.
    Always via the Write tool to a file under `$env:TEMP` - never a double-quoted here-string,
    reviews quote PowerShell and `"$var"` expands to nothing:
    ```powershell
-   & "<scripts>\Post-PrReview.ps1" -PrNumber <prNumber> -Model <model> -ReviewFile "$env:TEMP\ai-review-<prNumber>-<model>-<first 7 of head>.md"
+   & "<scripts>\Post-PrReview.ps1" -PrNumber <prNumber> -Model <model> -HeadSha <head> -ReviewFile "$env:TEMP\ai-review-<prNumber>-<model>-<first 7 of head>.md"
    ```
    The script validates the header, verdict and length, refuses a file older than an hour,
-   posts one comment, deletes the file, and prints the comment id and url. If it throws, fix the
-   markdown and re-run; never post by hand.
+   appends a hidden head marker, posts one comment, deletes the file, and prints the comment id
+   and url. Do not write the head marker yourself. If it throws, fix the markdown and re-run;
+   never post by hand.
 7. Report back: verdict, counts per severity, comment id and url. Nothing else - findings live
    on the PR.
 
