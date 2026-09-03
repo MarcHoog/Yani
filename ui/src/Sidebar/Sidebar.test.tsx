@@ -13,6 +13,12 @@ test('marks the active item', async () => {
   await expect.element(screen.getByRole('link', { name: 'Automations 2' })).not.toHaveAttribute('aria-current')
 })
 
+test('collapsed keeps link names through title', async () => {
+  const screen = await render(<Sidebar brand="Yani" groups={groups} collapsed />)
+
+  await expect.element(screen.getByRole('link', { name: 'Board' })).toHaveAttribute('title', 'Board')
+})
+
 test('hands navigation to onNavigate instead of following the href', async () => {
   const onNavigate = vi.fn()
   const before = location.href
