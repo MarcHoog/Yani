@@ -1,6 +1,6 @@
 ---
 name: github-pr-review
-description: Run a local dual-model AI review of a GitHub pull request in this repo - PowerShell scripts collect the PR context, create two detached worktrees on the PR head, and the parent spawns two cold github-pr-reviewer agents (Sonnet and Opus) that each post one structured PR comment; a script then folds re-reviews into the PR's single sonnet and single opus comments and removes the worktrees. Use after opening or updating a PR in this repo, or when asked to "review the PR", "get a second opinion on the PR", or "run the AI reviewers".
+description: Run a local dual-model AI review of a GitHub pull request in this repo - PowerShell scripts collect the PR context, create two detached worktrees on the PR head, and the parent spawns two cold github-pr-reviewer agents (Sonnet and Opus) that each post one structured PR comment; a script then folds re-reviews into the PR's single sonnet and single opus comments and removes the worktrees, and the parent fixes the findings, pushes and re-reviews for at most 3 rounds before asking again. Use only when the user explicitly asks - a yes to "Start AI review of PR #n?", "review the PR", "get a second opinion on the PR", "run the AI reviewers". Never start it because a PR was opened or pushed.
 ---
 
 # Dual-model PR review (local)
@@ -31,12 +31,42 @@ of the change.
 
 ## When to run
 
-After a PR is created or updated with new commits. Launch automatically; do not ask.
+Only on an explicit go from the user. Creating or pushing a PR never starts a review; the
+`github-pull-request` skill ends by asking, verbatim:
+
+```
+Start AI review of PR #<n>?
+```
+
+Yes (or "review the PR", "run the reviewers") starts one review loop of at most 3 rounds (below).
+Anything else means no. Never infer a yes from a push, a merge request, or an earlier yes on
+another PR or an exhausted loop - every loop needs its own answer.
 
 One round per batch, not per fix. Before pushing, apply every fix you intend to make for the current
 findings (code, tests, docs) locally and push them as one commit or one push. A round runs two cold
 agents for about five minutes; pushing one fix at a time and re-reviewing each multiplies that for no gain.
 Docs-only follow-ups belong in the same batch as the code they describe.
+
+## Review loop (max 3 rounds per yes)
+
+One yes buys at most 3 rounds. A round = Steps 1-5 below, then self-fix:
+
+1. Run Steps 1-5 (review, merge, cleanup).
+2. Both verdicts `approve`: report and stop. No question needed - loop done.
+3. Otherwise read the findings from both canonical comments. Fix every BLOCKER, MAJOR and MINOR
+   in the PR branch; NITs at your judgement. A finding you disagree with is not fixed silently:
+   reply on the PR comment with the reason, and list it in the report.
+4. Commit, push once, PATCH the PR body (Changes / Remaining), then start the next round.
+5. After the 3rd round, or when the fixes of a round need a design decision, stop - even if
+   findings remain. Report per model: verdict and comment url, the rounds used, what was fixed,
+   what is open. Then ask, verbatim, and wait:
+
+```
+Start AI review of PR #<n>?
+```
+
+Never a 4th round on the same yes. Background job: the question goes on the `needs input:` line.
+Interactive: AskUserQuestion. Count rounds per loop, not per PR - a fresh yes resets to 3.
 
 Run it from a checkout on `main` (the primary checkout, or a worktree of `main`), not from the
 PR branch. `scripts` and `agentDef` are taken from the launching checkout, and when that is the
@@ -130,7 +160,7 @@ that died before this step (clean `ai-review-*` worktrees older than 2 hours):
 
 Report: `$ctx.url`, and per model the verdict and canonical comment url (reviewer output on a
 first round, merge output on a re-review). Do not re-summarise findings in chat - they live on
-the PR. Do not act on them unless the user asks.
+the PR. Then continue the review loop above: fix and re-review while rounds remain, else ask.
 
 ## Checklist
 
@@ -139,3 +169,5 @@ the PR. Do not act on them unless the user asks.
 3. Two `github-pr-reviewer` agents in one message, sonnet + opus, prompt = coordinates only.
 4. `Merge-PrReviewComments.ps1` ran; PR left with one AI comment per model.
 5. `Remove-ReviewerWorktree.ps1` with the two paths; `git worktree list` shows them gone.
+6. Loop started only on an explicit yes; at most 3 rounds on it; ended with both `approve` or the
+   verbatim `Start AI review of PR #<n>?` question.
