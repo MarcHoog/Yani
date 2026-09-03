@@ -4,16 +4,18 @@ import './Sidebar.css'
 
 export type SidebarItem = { label: string; href: string; active?: boolean; badge?: string | number }
 export type SidebarGroup = { title?: string; items: SidebarItem[] }
+export type SidebarVariant = 'default' | 'ink' | 'rail' | 'floating' | 'dense' | 'soft'
 
 export type SidebarProps = {
   brand: string
   tag?: string
   groups: SidebarGroup[]
+  variant?: SidebarVariant
   children?: ReactNode
   onNavigate?: (href: string) => void
 }
 
-export function Sidebar({ brand, tag, groups, children, onNavigate }: SidebarProps) {
+export function Sidebar({ brand, tag, groups, variant = 'default', children, onNavigate }: SidebarProps) {
   function click(e: MouseEvent<HTMLAnchorElement>, href: string) {
     if (!onNavigate || !href.startsWith('/') || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return
     e.preventDefault()
@@ -21,7 +23,7 @@ export function Sidebar({ brand, tag, groups, children, onNavigate }: SidebarPro
   }
 
   return (
-    <aside className="y-sidebar">
+    <aside className={variant === 'default' ? 'y-sidebar' : `y-sidebar y-sidebar--${variant}`} data-theme={variant === 'ink' ? 'dark' : undefined}>
       <div className="y-sidebar-brand">
         <span className="y-sidebar-brand-name">{brand}</span>
         {tag && <span className="y-sidebar-brand-tag">{tag}</span>}
