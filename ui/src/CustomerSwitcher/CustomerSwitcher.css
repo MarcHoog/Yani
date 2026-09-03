@@ -14,7 +14,7 @@
   padding: 8px 10px;
   text-align: left;
   border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  border-radius: 8px;
   background-color: var(--surface-subtle);
   color: var(--text);
   cursor: pointer;
@@ -29,10 +29,8 @@
 
 .y-customer-label {
   grid-area: label;
-  font-size: 0.68rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font-size: 0.72rem;
+  font-weight: 500;
   color: var(--text-muted);
 }
 

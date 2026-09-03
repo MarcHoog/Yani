@@ -1,3 +1,4 @@
+import { Boxes, Building2, GitFork, KeyRound, LayoutDashboard, Layers, MapPin, Terminal, Ticket, Users, UsersRound, Workflow, ExternalLink } from 'lucide-react'
 import { CustomerSwitcher } from '../CustomerSwitcher/CustomerSwitcher'
 import { Sidebar, type SidebarGroup } from './Sidebar'
 
@@ -13,21 +14,65 @@ const customers = [
 ]
 
 const ssot: SidebarGroup[] = [
-  { items: [{ label: 'Overview', href: '/', active: true }] },
-  { title: 'Organization', items: [{ label: 'Profile', href: '/profile' }, { label: 'Sites', href: '/sites' }] },
-  { title: 'Identity', items: [{ label: 'Users', href: '/users' }, { label: 'Groups', href: '/groups' }] },
-  { title: 'Assets', items: [{ label: 'Devices', href: '/devices' }, { label: 'Licenses', href: '/licenses' }] },
-  { title: 'Tools', items: [{ label: 'Graph explorer', href: '/graph' }, { label: 'Cypher console', href: '/cypher' }] },
+  { items: [{ label: 'Overview', href: '/', icon: <LayoutDashboard />, active: true }] },
+  {
+    title: 'Organization',
+    items: [
+      { label: 'Profile', href: '/profile', icon: <Building2 /> },
+      { label: 'Sites', href: '/sites', icon: <MapPin /> },
+    ],
+  },
+  {
+    title: 'Identity',
+    items: [
+      { label: 'Users', href: '/users', icon: <Users /> },
+      { label: 'Groups', href: '/groups', icon: <UsersRound /> },
+    ],
+  },
+  {
+    title: 'Assets',
+    items: [
+      { label: 'Devices', href: '/devices', icon: <Boxes /> },
+      { label: 'Licenses', href: '/licenses', icon: <KeyRound /> },
+    ],
+  },
+  {
+    title: 'Tools',
+    items: [
+      { label: 'Graph explorer', href: '/graph', icon: <GitFork /> },
+      { label: 'Cypher console', href: '/cypher', icon: <Terminal />, badge: 2 },
+    ],
+  },
 ]
 
 const tickets: SidebarGroup[] = [
-  { title: 'Helpdesk', items: [{ label: 'Board', href: '/board', active: true }, { label: 'Automations', href: '/automations', badge: 2 }] },
-  { title: 'Links', items: [{ label: 'SSOT admin portal', href: '/ssot' }, { label: 'Customer portal', href: '/portal' }] },
+  {
+    title: 'Helpdesk',
+    items: [
+      { label: 'Board', href: '/board', icon: <Ticket />, active: true },
+      { label: 'Automations', href: '/automations', icon: <Workflow />, badge: 2 },
+    ],
+  },
+  {
+    title: 'Links',
+    items: [
+      { label: 'SSOT admin portal', href: '/ssot', icon: <Layers /> },
+      { label: 'Customer portal', href: '/portal', icon: <ExternalLink /> },
+    ],
+  },
 ]
 
 export const Default = () => (
   <div style={frame}>
     <Sidebar brand="Yani" tag="SSOT" groups={ssot}>
+      <CustomerSwitcher customers={customers} currentId="cookiecooker" onSelect={noop} />
+    </Sidebar>
+  </div>
+)
+
+export const Collapsed = () => (
+  <div style={frame}>
+    <Sidebar brand="Yani" tag="SSOT" groups={ssot} collapsed>
       <CustomerSwitcher customers={customers} currentId="cookiecooker" onSelect={noop} />
     </Sidebar>
   </div>
