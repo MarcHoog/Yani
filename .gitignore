@@ -1,5 +1,6 @@
 # claude isolated config (credentials, memory, cache)
 .claude-home/
+.claude/worktrees/
 .claude/settings.local.json
 
 # python
