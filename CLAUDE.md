@@ -12,7 +12,7 @@ This repo is NOT a work project. The user's global `~/.claude/CLAUDE.md` contain
 - IGNORE global "PowerShell, never Python/Node" default. Backend is Python (FastAPI), frontend is TypeScript. PowerShell only for repo helper scripts.
 - IGNORE any Azure MCP / Azure best-practice tool nudges. Do not call Azure tools for this repo.
 - KEEP: read before edit, implement exactly what was asked, no extra abstractions, error handling only at boundaries, state plan before changes, concise responses, no emojis, CRLF, Windows paths in scripts.
-- Git host: GitHub, `https://github.com/MarcHoog/Yani.git`. Feature branches + pull requests. Never commit or push to `main` directly. PR body: Plan / Changes / Remaining.
+- Git host: GitHub, `https://github.com/MarcHoog/Yani.git`. Feature branches + pull requests. Never commit or push to `main` directly. Use the `github-pull-request` skill (PowerShell REST, no gh) for PRs and the `github-pr-review` skill for the dual-model AI review after every push.
 
 Preferred: run `.\claude.ps1` before starting Claude. It toggles `CLAUDE_CONFIG_DIR` to `.claude-home\` (run again = back to global), prints the active home. `.\claude.ps1 -Launch` sets it and starts claude. `-Status`, `-On`, `-Off` also available. With yani home active, global config, memory, plugins and hooks are not loaded at all. This section is the fallback when launched with global home.
 
