@@ -44,7 +44,9 @@ Preferred: run `.\claude.ps1` before starting Claude. It toggles `CLAUDE_CONFIG_
 
 ## Current state
 
-No code yet. Building up slowly, design first. Architecture lives in `docs\architecture.md` (mermaid). Do not scaffold code folders until the user asks.
+Building up slowly, design first. Architecture lives in `docs\architecture.md` (mermaid). Do not scaffold code folders until the user asks.
+
+Scaffolded so far: `ui\` (`@yani/ui` component library, pnpm workspace root at repo root). See `ui\CLAUDE.md`.
 
 Reference POC (read-only, do not modify): `C:\dev personal\personal-website\.playground\`
 (ssot-api, ticket-api, ssot-portal, ticket-portal, user-portal). Port from there, do not copy blindly.

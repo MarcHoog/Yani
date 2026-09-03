@@ -1,0 +1,19 @@
+.y-theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background-color: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.y-theme-toggle:hover {
+  background-color: var(--surface-hover);
+  color: var(--accent);
+  border-color: var(--border-accent);
+}
