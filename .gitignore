@@ -1,0 +1,26 @@
+# claude isolated config (credentials, memory, cache)
+.claude-home/
+.claude/settings.local.json
+
+# python
+.venv/
+__pycache__/
+.ruff_cache/
+.pytest_cache/
+*.egg-info/
+
+# node
+node_modules/
+dist/
+.vite/
+
+# env / secrets
+.env
+.env.*
+!.env.example
+
+# os / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

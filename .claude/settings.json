@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Read",
+      "Glob",
+      "Grep",
+      "PowerShell(docker compose:*)",
+      "PowerShell(docker ps:*)",
+      "PowerShell(uv:*)",
+      "PowerShell(pnpm:*)",
+      "PowerShell(git status:*)",
+      "PowerShell(git diff:*)",
+      "PowerShell(git log:*)"
+    ],
+    "deny": [
+      "Skill(azdo-pull-request)",
+      "mcp__plugin_azure_azure__*"
+    ]
+  }
+}
