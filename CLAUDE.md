@@ -47,7 +47,9 @@ Preferred: run `.\claude.ps1` before starting Claude. It toggles `CLAUDE_CONFIG_
 
 Building up slowly, design first. Architecture lives in `docs\architecture.md` (mermaid). Do not scaffold code folders until the user asks.
 
-Scaffolded so far: `ui\` (`@yani/ui` component library, pnpm workspace root at repo root). See `ui\CLAUDE.md`.
+Scaffolded so far:
+- `ui\` (`@yani/ui` component library, pnpm workspace root at repo root). See `ui\CLAUDE.md`.
+- `ssot-api\` (FastAPI + Neo4j, uv workspace root at repo root, `compose.yaml` with neo4j + ssot-api, `dev.ps1`). See `ssot-api\CLAUDE.md`.
 
 UI style: `docs\style.md` (principles, tokens, scale, for humans). Agent rules distilled in `ui\CLAUDE.md` under Style. Anything visual follows both.
 
