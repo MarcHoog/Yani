@@ -43,3 +43,20 @@ gallery\                      dev page, discovers *.stories.tsx
 - Themes switch on `[data-theme]`, on any element, not only `html`. Gallery uses this to show both at once.
 - Theme preference is three-state: `system` (default, follows OS, nothing stored), `light`, `dark` (stored in `localStorage.theme`). `useTheme()` owns this. Portals copy the head script from `index.html` so the attribute is set before first paint.
 - Code must read without comments. If a component needs a comment block, split it.
+
+## Style
+
+Tonal, rounded, icon-led. Hierarchy through shade and space, not borders or color. Accent only for identity, primary action and signals. Long form with rationale: `docs\style.md`. Every new component follows these or does not merge.
+
+- Neutral ladder from `theme.css`: `--bg` page, `--surface` card, `--surface-subtle` control, `--surface-hover` hover. Sidebar has its own darker ladder (`--sb-*`). No other grays.
+- No borders on surfaces or controls. Hairline `--line` only to split rows or groups. No `box-shadow` on surfaces. `--shadow-lg` only on things that float (popovers, menus).
+- Radius: 16 (`--radius-lg`) for cards, panels, tables. 8 for buttons, inputs, rows, tiles. 999 for badges and meters. Nothing else.
+- Rows are 44px. Buttons and inputs 36px (`sm` 30px). Icons 20-22px in rows, 18px in buttons, 16px `sm`.
+- Text is sentence case everywhere. No `text-transform: uppercase`, no `letter-spacing` tracking on labels, no `--mono` outside code and ids.
+- Labels and table headers: 0.78rem, weight 500-600, `--text-muted`. Body 0.88-0.9rem. Card titles 0.95rem/600 `--text-h`. Page title 1.35rem/600.
+- Active and selected states are neutral fills (`--surface-hover` or `--sb-active`) with `--text-h`. Never accent background for "current".
+- Accent (`--accent`) is allowed on: logo and initial tiles, primary button, focus ring, badges and meters, icon tiles in StatTile and Notice. Nowhere else.
+- Status uses `--success` / `--warn` / `--danger` text on their `-dim` fills. Never solid status backgrounds except danger button hover.
+- Icons are `lucide-react`, outline, passed in as `ReactNode` by the portal. Components never pick domain icons themselves. Notice picks tone icons.
+- Dark theme is the same ladder in dark, not an inversion. Panel `#12141a`, card `--surface`, page `--bg`.
+- Empty and missing values render a muted `-`, never blank.
