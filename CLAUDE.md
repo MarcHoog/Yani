@@ -49,6 +49,8 @@ Building up slowly, design first. Architecture lives in `docs\architecture.md` (
 
 Scaffolded so far: `ui\` (`@yani/ui` component library, pnpm workspace root at repo root). See `ui\CLAUDE.md`.
 
+UI style: `docs\style.md` (principles, tokens, scale, for humans). Agent rules distilled in `ui\CLAUDE.md` under Style. Anything visual follows both.
+
 Reference POC (read-only, do not modify): `C:\dev personal\personal-website\.playground\`
 (ssot-api, ticket-api, ssot-portal, ticket-portal, user-portal). Port from there, do not copy blindly.
 
