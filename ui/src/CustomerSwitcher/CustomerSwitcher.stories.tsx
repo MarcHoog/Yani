@@ -2,7 +2,7 @@ import { CustomerSwitcher, type Customer } from './CustomerSwitcher'
 
 export default { title: 'CustomerSwitcher' }
 
-const frame = { width: 216, padding: 16, background: 'var(--surface)' }
+const frame = { width: 240, padding: 16, background: 'var(--bg)' }
 const noop = () => {}
 
 const customers: Customer[] = [

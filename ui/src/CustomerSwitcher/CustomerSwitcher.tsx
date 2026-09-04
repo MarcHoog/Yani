@@ -9,6 +9,14 @@ export type CustomerSwitcherProps = {
   onSelect: (id: string) => void
 }
 
+function Tile({ name }: { name?: string }) {
+  return (
+    <span className="y-customer-tile" aria-hidden="true">
+      {name ? name.charAt(0).toUpperCase() : '?'}
+    </span>
+  )
+}
+
 export function CustomerSwitcher({ customers, currentId, onSelect }: CustomerSwitcherProps) {
   const [open, setOpen] = useState(false)
   const root = useRef<HTMLDivElement>(null)
@@ -37,11 +45,13 @@ export function CustomerSwitcher({ customers, currentId, onSelect }: CustomerSwi
         aria-expanded={open}
         onClick={() => setOpen(!open)}
       >
-        <span className="y-customer-label">Customer</span>
-        <span className="y-customer-name">{current?.name ?? 'Select a customer'}</span>
-        <svg className="y-customer-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="m7 15 5 5 5-5" />
-          <path d="m7 9 5-5 5 5" />
+        <Tile name={current?.name} />
+        <span className="y-customer-text">
+          <span className="y-customer-name">{current?.name ?? 'Select a customer'}</span>
+          <span className="y-customer-label">Customer</span>
+        </span>
+        <svg className="y-customer-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="m6 9 6 6 6-6" />
         </svg>
       </button>
 
@@ -56,6 +66,7 @@ export function CustomerSwitcher({ customers, currentId, onSelect }: CustomerSwi
               className="y-customer-option"
               onClick={() => select(c.id)}
             >
+              <Tile name={c.name} />
               {c.name}
             </button>
           ))}
