@@ -1,0 +1,18 @@
+.y-meter {
+  height: 6px;
+  border-radius: 999px;
+  background-color: var(--surface-hover);
+  overflow: hidden;
+}
+
+.y-meter-fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background-color: var(--accent);
+  transition: width 0.3s ease;
+}
+
+.y-meter--warn .y-meter-fill {
+  background-color: var(--danger);
+}

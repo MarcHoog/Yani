@@ -1,0 +1,87 @@
+.y-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.82rem;
+}
+
+.y-field-label {
+  font-weight: 500;
+  color: var(--text-h);
+}
+
+.y-field-required {
+  color: var(--text-muted);
+}
+
+.y-field-hint {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.y-field-error {
+  font-size: 0.78rem;
+  color: var(--danger);
+}
+
+.y-input {
+  width: 100%;
+  height: 36px;
+  padding: 0 12px;
+  border: none;
+  border-radius: 8px;
+  background-color: var(--surface-subtle);
+  font-size: 0.9rem;
+  color: var(--text-h);
+  outline: none;
+  transition: background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.y-input::placeholder {
+  color: var(--text-muted);
+}
+
+.y-input:hover:not(:disabled) {
+  background-color: var(--surface-hover);
+}
+
+.y-input:focus {
+  background-color: var(--surface);
+  box-shadow: 0 0 0 1px var(--accent), 0 0 0 4px var(--accent-dim);
+}
+
+.y-input:disabled {
+  opacity: 0.5;
+}
+
+.y-field--error .y-input {
+  box-shadow: 0 0 0 1px var(--danger);
+}
+
+.y-input--area {
+  height: auto;
+  min-height: 88px;
+  padding: 9px 12px;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.y-select {
+  position: relative;
+  display: block;
+}
+
+.y-input--select {
+  padding-right: 36px;
+  appearance: none;
+  cursor: pointer;
+}
+
+.y-select-chevron {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  pointer-events: none;
+}

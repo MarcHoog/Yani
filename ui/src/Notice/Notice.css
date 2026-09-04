@@ -1,0 +1,68 @@
+.y-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  font-size: 0.88rem;
+  color: var(--text);
+}
+
+.y-notice-icon {
+  display: inline-flex;
+  flex: none;
+  margin-top: 1px;
+}
+
+.y-notice-icon > svg {
+  width: 20px;
+  height: 20px;
+}
+
+.y-notice-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.y-notice-title {
+  font-weight: 600;
+  color: var(--text-h);
+}
+
+.y-notice-text {
+  line-height: 1.5;
+}
+
+.y-notice--info {
+  background-color: var(--accent-dim);
+}
+
+.y-notice--info .y-notice-icon {
+  color: var(--accent);
+}
+
+.y-notice--success {
+  background-color: var(--success-dim);
+}
+
+.y-notice--success .y-notice-icon {
+  color: var(--success);
+}
+
+.y-notice--warn {
+  background-color: var(--warn-dim);
+}
+
+.y-notice--warn .y-notice-icon {
+  color: var(--warn);
+}
+
+.y-notice--danger {
+  background-color: var(--danger-dim);
+}
+
+.y-notice--danger .y-notice-icon {
+  color: var(--danger);
+}

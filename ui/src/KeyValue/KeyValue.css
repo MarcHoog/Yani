@@ -1,0 +1,28 @@
+.y-kv {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 14px 24px;
+}
+
+.y-kv-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.y-kv-key {
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.y-kv-value {
+  font-size: 0.9rem;
+  color: var(--text-h);
+  overflow-wrap: anywhere;
+}
+
+.y-kv-empty {
+  color: var(--text-muted);
+}

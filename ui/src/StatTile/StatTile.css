@@ -1,0 +1,52 @@
+.y-stat {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 16px 18px;
+  border-radius: var(--radius-lg);
+  background-color: var(--surface);
+}
+
+.y-stat-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  flex: none;
+  border-radius: 11px;
+  background-color: var(--accent-dim);
+  color: var(--accent);
+}
+
+.y-stat-icon > svg {
+  width: 20px;
+  height: 20px;
+}
+
+.y-stat-body {
+  min-width: 0;
+}
+
+.y-stat-label {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.y-stat-value {
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.3;
+  color: var(--text-h);
+}
+
+.y-stat-hint {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.y-stat-hint--bad {
+  color: var(--danger);
+}

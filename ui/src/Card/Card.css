@@ -1,0 +1,27 @@
+.y-card {
+  padding: 20px;
+  border-radius: var(--radius-lg);
+  background-color: var(--surface);
+  color: var(--text);
+}
+
+.y-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.y-card-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text-h);
+}
+
+.y-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
