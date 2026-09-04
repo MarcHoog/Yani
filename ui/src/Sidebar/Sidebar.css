@@ -3,13 +3,12 @@
   --sb-hover: #dfe2e8;
   --sb-active: #d3d7df;
   --sb-footer: #e2e5ea;
-  --sb-card: rgba(255, 255, 255, 0.6);
   --sb-line: rgba(9, 30, 66, 0.1);
   --sb-text: var(--text);
   --sb-text-h: var(--text-h);
   --sb-muted: var(--text-muted);
 
-  width: 216px;
+  width: 240px;
   height: calc(100% - 24px);
   margin: 12px;
   display: flex;
@@ -28,7 +27,6 @@
   --sb-hover: #21242c;
   --sb-active: #2a2e38;
   --sb-footer: #181a21;
-  --sb-card: rgba(255, 255, 255, 0.05);
   --sb-line: rgba(255, 255, 255, 0.08);
   --sb-text: #a3a8b3;
   --sb-text-h: #f4f5f7;
@@ -183,15 +181,15 @@
 }
 
 .y-sidebar .y-customer-current {
-  border-color: transparent;
-  border-radius: 8px;
-  background-color: var(--sb-card);
   color: var(--sb-text);
 }
 
-.y-sidebar .y-customer-current:hover,
-.y-sidebar .y-customer-current[aria-expanded='true'] {
+.y-sidebar .y-customer-current:hover {
   background-color: var(--sb-hover);
+}
+
+.y-sidebar .y-customer-current[aria-expanded='true'] {
+  background-color: var(--sb-active);
 }
 
 .y-sidebar .y-customer-label {
