@@ -1,0 +1,95 @@
+.y-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 14px;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.y-button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--accent);
+}
+
+.y-button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.y-button--sm {
+  height: 30px;
+  padding: 0 10px;
+  gap: 6px;
+  font-size: 0.8rem;
+}
+
+.y-button--icon-only {
+  width: 36px;
+  padding: 0;
+}
+
+.y-button--icon-only.y-button--sm {
+  width: 30px;
+}
+
+.y-button-icon {
+  display: inline-flex;
+  flex: none;
+}
+
+.y-button-icon > svg {
+  width: 18px;
+  height: 18px;
+}
+
+.y-button--sm .y-button-icon > svg {
+  width: 16px;
+  height: 16px;
+}
+
+.y-button--primary {
+  background-color: var(--accent);
+  color: var(--accent-contrast);
+}
+
+.y-button--primary:hover:not(:disabled) {
+  background-color: var(--accent-hover);
+}
+
+.y-button--secondary {
+  background-color: var(--surface-subtle);
+  color: var(--text-h);
+}
+
+.y-button--secondary:hover:not(:disabled) {
+  background-color: var(--surface-hover);
+}
+
+.y-button--ghost {
+  background-color: transparent;
+  color: var(--text);
+}
+
+.y-button--ghost:hover:not(:disabled) {
+  background-color: var(--surface-subtle);
+  color: var(--text-h);
+}
+
+.y-button--danger {
+  background-color: var(--danger-dim);
+  color: var(--danger);
+}
+
+.y-button--danger:hover:not(:disabled) {
+  background-color: var(--danger);
+  color: #ffffff;
+}

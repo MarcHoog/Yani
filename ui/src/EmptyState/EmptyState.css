@@ -1,0 +1,44 @@
+.y-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 40px 24px;
+  border-radius: var(--radius-lg);
+  background-color: var(--surface);
+}
+
+.y-empty-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  margin-bottom: 14px;
+  border-radius: 14px;
+  background-color: var(--surface-subtle);
+  color: var(--text-muted);
+}
+
+.y-empty-icon > svg {
+  width: 24px;
+  height: 24px;
+}
+
+.y-empty-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-h);
+}
+
+.y-empty-text {
+  max-width: 360px;
+  margin-top: 4px;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.y-empty-action {
+  margin-top: 16px;
+}

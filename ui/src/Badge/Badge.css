@@ -1,0 +1,35 @@
+.y-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1.6;
+  white-space: nowrap;
+}
+
+.y-badge--neutral {
+  background-color: var(--surface-hover);
+  color: var(--text);
+}
+
+.y-badge--accent {
+  background-color: var(--accent-dim);
+  color: var(--accent);
+}
+
+.y-badge--success {
+  background-color: var(--success-dim);
+  color: var(--success);
+}
+
+.y-badge--warn {
+  background-color: var(--warn-dim);
+  color: var(--warn);
+}
+
+.y-badge--danger {
+  background-color: var(--danger-dim);
+  color: var(--danger);
+}
