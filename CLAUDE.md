@@ -49,7 +49,7 @@ Building up slowly, design first. Architecture lives in `docs\architecture.md` (
 
 Scaffolded so far:
 - `ui\` (`@yani/ui` component library, pnpm workspace root at repo root). See `ui\CLAUDE.md`.
-- `ssot-api\` (FastAPI + Neo4j, uv workspace root at repo root, `compose.yaml` with neo4j + ssot-api, `dev.ps1`). See `ssot-api\CLAUDE.md`.
+- `ssot-api\` (FastAPI + Neo4j, uv workspace root at repo root, `compose.yaml` with neo4j + ssot-api, `dev.py`). See `ssot-api\CLAUDE.md`.
 
 UI style: `docs\style.md` (principles, tokens, scale, for humans). Agent rules distilled in `ui\CLAUDE.md` under Style. Anything visual follows both.
 
@@ -59,6 +59,6 @@ Reference POC (read-only, do not modify): `C:\dev personal\personal-website\.pla
 ## Conventions
 
 - Each component folder gets its own `CLAUDE.md` (stack, run, test, boundaries). Sub-agents read that first.
-- Root helper script: `dev.ps1` (up, down, seed, logs, test). Agents use it, not raw docker commands.
+- Root helper script: `dev.py` (up, down, seed, logs, test), run as `python dev.py <command>`. Agents use it, not raw docker commands.
 - Python: ruff, strict Pydantic, type hints everywhere. TS: strict mode.
 - No auth in the product at all (single user, local). Do not add auth scaffolding, middleware, or bypass flags.

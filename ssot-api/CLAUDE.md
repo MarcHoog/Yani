@@ -8,7 +8,7 @@ Python 3.13, FastAPI, neo4j async driver, strict Pydantic, uv (workspace member 
 
 ## Run
 
-From repo root: `.\dev.ps1 up` starts neo4j + ssot-api via compose. Docs: http://localhost:8000/docs
+From repo root: `python dev.py up` starts neo4j + ssot-api via compose. Docs: http://localhost:8000/docs
 Local without compose: `uv sync` at root, then from `ssot-api\`: `uv run uvicorn ssot_api.main:app --reload`. Needs neo4j on bolt://localhost:7687, see `.env.example`.
 
 | command (from `ssot-api\`) | does |
