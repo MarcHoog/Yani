@@ -1,14 +1,14 @@
 ---
 name: github-pull-request
-description: Interact with GitHub via PowerShell REST - pull requests (clean feature-branch flow, conventional-commit titles, Plan/Changes/Remaining body), Actions runs and check results, and issues. Use whenever asked to open/update/resume a PR, check CI status or logs, or read/link issues in this repo (yani). No gh CLI needed - auth is the token git already caches for github.com.
+description: Interact with GitHub via Python REST - pull requests (clean feature-branch flow, conventional-commit titles, Plan/Changes/Remaining body), Actions runs and check results, and issues. Use whenever asked to open/update/resume a PR, check CI status or logs, or read/link issues in this repo (yani). No gh CLI needed - auth is the token git already caches for github.com. Cross-platform: any OS with python3.
 ---
 
 # GitHub Pull Requests
 
-How to open and maintain pull requests in this repo cleanly. PowerShell REST only; `gh` is not
-installed and not required.
+How to open and maintain pull requests in this repo cleanly. Python REST only; `gh` is not
+installed and not required. Scripts are stdlib-only Python 3.10+ and run on any OS.
 
-Repo coordinates are derived from the origin remote by `GitHub.Common.ps1`
+Repo coordinates are derived from the origin remote by `github_common.py`
 (`https://github.com/<owner>/<repo>.git`). Target branch is always `main`.
 
 ## Rules (non-negotiable)
@@ -55,84 +55,112 @@ PRs: pick the dominant one. Append `!` after the scope for a breaking API contra
 
 ## Setup
 
-Auth and the REST wrapper live in `.claude\skills\github-pr-review\scripts\GitHub.Common.ps1` -
-dot-source it. `Invoke-GitHub -Uri -Method -Body` takes a path (`/repos/...`) or full URL and
-throws on non-2xx with GitHub's message. `Get-GitHubRepoPath` prefixes `/repos/<owner>/<repo>`.
+Everything goes through `gh_api.py` in `.claude/skills/github-pr-review/scripts/`. It takes a
+method and a path (repo-relative like `pulls`, absolute like `/repos/...`, or a full
+api.github.com URL) and prints the JSON response. `--body-file <json>` for POST/PATCH bodies,
+`--paginate` for long lists, `--download <file>` for raw payloads like job logs. Non-2xx exits 1
+with GitHub's message on stderr.
 
-```powershell
-. (Join-Path (git rev-parse --show-toplevel) '.claude\skills\github-pr-review\scripts\GitHub.Common.ps1')
+```bash
+S="$(git rev-parse --show-toplevel)/.claude/skills/github-pr-review/scripts"
 ```
 
 ## Create a PR
 
-Body via a file or single-quoted here-string - PR bodies quote code and `"$var"` expands.
+Body via a JSON file written with the Write tool - PR bodies quote code and shell strings
+mangle it. Never build the JSON inline in the shell.
 
-```powershell
-$branch = git branch --show-current
-$body = @'
-## Plan
-<what was planned and why>
+`pr.json` (in the scratchpad or temp dir):
 
-## Changes
-- <change 1>
-- <change 2>
-
-## Remaining
-None
-'@
-
-$pr = Invoke-GitHub (Get-GitHubRepoPath '/pulls') POST @{
-    title = '<type(scope): summary>'
-    head  = $branch
-    base  = 'main'
-    body  = $body
-    draft = $false   # $true for work in progress
+```json
+{
+  "title": "<type(scope): summary>",
+  "head": "<branch>",
+  "base": "main",
+  "draft": false,
+  "body": "## Plan\n<what was planned and why>\n\n## Changes\n- <change 1>\n- <change 2>\n\n## Remaining\nNone"
 }
-Write-Host "PR #$($pr.number): $($pr.html_url)"
 ```
+
+```bash
+python3 "$S/gh_api.py" POST pulls --body-file pr.json
+```
+
+The response carries `number` and `html_url`.
 
 ## After creating (or updating) a PR
 
 Never launch the AI review on your own. After every PR create or push, report the PR url and ask
-the user this question verbatim, then stop and wait for the answer:
+what to do next, then stop and wait for the answer. Interactive: AskUserQuestion. Background job:
+the question and options go on the `needs input:` line. The question names the PR and offers
+exactly these choices (AskUserQuestion adds "Other" by itself; a background job lists it):
 
 ```
-Start AI review of PR #<n>?
+PR #<n> ready: <url>. Next step?
+- Review with 2 agents (Sonnet + Opus dual review)
+- Review with 1 agent (Opus only, faster)
+- Resolve comments (read PR feedback and address it)
+- Make more changes
+- PR merged - clear worktree
+- Other
 ```
 
-Background job: put it on the `needs input:` line. Interactive: AskUserQuestion. Only an explicit
-yes starts the `github-pr-review` skill - "review it", "run the reviewers", "yes" all count; silence,
-a different task, or a push alone never do. The review skill owns the loop from there (max 3
-review + self-fix rounds per yes, then it asks the same question again).
+AskUserQuestion caps at 4 custom options ("Other" is added automatically): interactive
+sessions offer 2 agents / 1 agent / resolve comments / merged-clear, and "make more changes"
+arrives as free text via Other. A background job lists all six.
+
+Routing:
+
+- **Review with 2 agents / 1 agent** - start the `github-pr-review` skill with that agent count.
+  Only an explicit review answer starts it - one of these options, or the user's own words
+  ("review it", "run the reviewers" = 2 agents unless they say otherwise); silence, a different
+  task, or a push alone never do. The review skill owns the loop from there (max 3 review +
+  self-fix rounds per answer, then it asks this question again).
+- **Resolve comments** - read the PR's feedback with the `github-pr-comments` skill, address it,
+  push once, then ask this question again.
+- **Make more changes / Other** - do what the user says; after the next push, ask again.
+- **PR merged - clear worktree** - clean up after the merge, never perform the merge itself.
+  First confirm: `gh_api.py GET pulls/<n>` must show `"merged": true` - if not, report that and
+  ask again. Then from the main checkout: `git fetch --prune origin`, delete the local feature
+  branch (`git branch -d <branch>` - `-d`, never `-D`; an unmerged error is a finding to report),
+  and remove the feature worktree (`git -C <mainRoot> worktree remove <path>`) if the work lives
+  in one. Never force-remove a dirty worktree - report the leftover changes instead. Removing
+  the worktree the session itself runs in deletes its own cwd: make it the very last action and
+  say so in the report.
 
 Batch before you push: address all current findings and related docs locally, then push once. Every
 push costs one full review round, so one fix per push is the wrong cadence.
 
 ## List open PRs
 
-```powershell
-$prs = Invoke-GitHub (Get-GitHubRepoPath '/pulls?state=open')
-$prs | ForEach-Object { "#$($_.number): $($_.title) [$($_.head.ref)]$(if ($_.draft) { ' (draft)' })" }
+```bash
+python3 "$S/gh_api.py" GET "pulls?state=open"
 ```
 
 ## Get PR details (read before resuming)
 
-```powershell
-$pr = Invoke-GitHub (Get-GitHubRepoPath '/pulls/{n}')
-$pr.body
+```bash
+python3 "$S/gh_api.py" GET pulls/<n>
 ```
+
+Read `.body` from the output.
 
 ## Update PR body (multi-session continuity)
 
-```powershell
-Invoke-GitHub (Get-GitHubRepoPath '/pulls/{n}') PATCH @{ body = $updatedBody }
+Write `body.json` as `{"body": "<updated markdown>"}` with the Write tool, then:
+
+```bash
+python3 "$S/gh_api.py" PATCH pulls/<n> --body-file body.json
 ```
 
 ## Add a PR comment
 
-```powershell
-Invoke-GitHub (Get-GitHubRepoPath '/issues/{n}/comments') POST @{ body = '<comment>' }
+```bash
+python3 "$S/gh_api.py" POST issues/<n>/comments --body-file comment.json
 ```
+
+with `comment.json` as `{"body": "<comment markdown>"}`. To read the comments already on a PR
+(human feedback, review verdicts, inline threads), use the `github-pr-comments` skill.
 
 ## Mark ready / convert to draft
 
@@ -142,35 +170,33 @@ Ready-for-review has no REST endpoint; use the GitHub UI. Draft flag can only be
 
 Latest workflow runs for a branch:
 
-```powershell
-$runs = (Invoke-GitHub (Get-GitHubRepoPath "/actions/runs?branch=$branch&per_page=5")).workflow_runs
-$runs | ForEach-Object { "$($_.id): $($_.name) - $($_.status) ($($_.conclusion))" }
+```bash
+python3 "$S/gh_api.py" GET "actions/runs?branch=<branch>&per_page=5"
 ```
+
+Read `.workflow_runs[]` - `id`, `name`, `status`, `conclusion`.
 
 Check runs for the PR head commit:
 
-```powershell
-$checks = (Invoke-GitHub (Get-GitHubRepoPath "/commits/$($pr.head.sha)/check-runs")).check_runs
-$checks | ForEach-Object { "$($_.name): $($_.status) ($($_.conclusion))" }
+```bash
+python3 "$S/gh_api.py" GET commits/<headSha>/check-runs
 ```
 
-Log of the failed job (endpoint redirects to plain text; `Invoke-WebRequest` follows it):
+Log of a failed job (`.jobs[]` from the runs endpoint, pick `conclusion == "failure"`):
 
-```powershell
-$jobs = (Invoke-GitHub (Get-GitHubRepoPath "/actions/runs/{runId}/jobs")).jobs
-$job  = $jobs | Where-Object conclusion -eq 'failure' | Select-Object -First 1
-Invoke-WebRequest -Uri "https://api.github.com$(Get-GitHubRepoPath "/actions/jobs/$($job.id)/logs")" -Headers (Get-GitHubHeaders) -OutFile "$env:TEMP\job-log.txt"
+```bash
+python3 "$S/gh_api.py" GET actions/runs/<runId>/jobs
+python3 "$S/gh_api.py" GET actions/jobs/<jobId>/logs --download job-log.txt
 ```
 
-Whole run as zip: `/actions/runs/{runId}/logs`.
+Whole run as zip: `actions/runs/<runId>/logs --download run-logs.zip`.
 
 ## Issues
 
 Get an issue:
 
-```powershell
-$issue = Invoke-GitHub (Get-GitHubRepoPath '/issues/{n}')
-"#$($issue.number): $($issue.title) [$($issue.state)]"
+```bash
+python3 "$S/gh_api.py" GET issues/<n>
 ```
 
 Link an issue to the PR: put `Closes #<n>` (or `Refs #<n>` without auto-close) in the PR body.
@@ -183,4 +209,4 @@ GitHub links it automatically; no API call needed.
 3. PR created with a conventional `type(scope): summary` title and the Plan / Changes / Remaining body.
 4. Issue referenced in the body if one exists.
 5. On resume: body PATCHed with latest progress.
-6. After the push: asked `Start AI review of PR #<n>?` verbatim and stopped. Review launched only on an explicit yes.
+6. After the push: asked the "Next step?" question (2 agents / 1 agent / resolve comments / more changes / merged-clear / other) and stopped. Review launched only on an explicit review answer.
