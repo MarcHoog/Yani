@@ -91,16 +91,29 @@ The response carries `number` and `html_url`.
 ## After creating (or updating) a PR
 
 Never launch the AI review on your own. After every PR create or push, report the PR url and ask
-the user this question verbatim, then stop and wait for the answer:
+what to do next, then stop and wait for the answer. Interactive: AskUserQuestion. Background job:
+the question and options go on the `needs input:` line. The question names the PR and offers
+exactly these choices (AskUserQuestion adds "Other" by itself; a background job lists it):
 
 ```
-Start AI review of PR #<n>?
+PR #<n> ready: <url>. Next step?
+- Review with 2 agents (Sonnet + Opus dual review)
+- Review with 1 agent (Opus only, faster)
+- Resolve comments (read PR feedback and address it)
+- Make more changes
+- Other
 ```
 
-Background job: put it on the `needs input:` line. Interactive: AskUserQuestion. Only an explicit
-yes starts the `github-pr-review` skill - "review it", "run the reviewers", "yes" all count; silence,
-a different task, or a push alone never do. The review skill owns the loop from there (max 3
-review + self-fix rounds per yes, then it asks again).
+Routing:
+
+- **Review with 2 agents / 1 agent** - start the `github-pr-review` skill with that agent count.
+  Only an explicit review answer starts it - one of these options, or the user's own words
+  ("review it", "run the reviewers" = 2 agents unless they say otherwise); silence, a different
+  task, or a push alone never do. The review skill owns the loop from there (max 3 review +
+  self-fix rounds per answer, then it asks this question again).
+- **Resolve comments** - read the PR's feedback with the `github-pr-comments` skill, address it,
+  push once, then ask this question again.
+- **Make more changes / Other** - do what the user says; after the next push, ask again.
 
 Batch before you push: address all current findings and related docs locally, then push once. Every
 push costs one full review round, so one fix per push is the wrong cadence.
@@ -183,4 +196,4 @@ GitHub links it automatically; no API call needed.
 3. PR created with a conventional `type(scope): summary` title and the Plan / Changes / Remaining body.
 4. Issue referenced in the body if one exists.
 5. On resume: body PATCHed with latest progress.
-6. After the push: asked `Start AI review of PR #<n>?` verbatim and stopped. Review launched only on an explicit yes.
+6. After the push: asked the "Next step?" question (2 agents / 1 agent / resolve comments / more changes / other) and stopped. Review launched only on an explicit review answer.

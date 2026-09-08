@@ -1,6 +1,6 @@
 ---
 name: github-pr-reviewer
-description: Cold-context code reviewer for one GitHub pull request in this repo (yani). Spawned by the github-pr-review skill, twice per PR (model sonnet and model opus), each in its own detached worktree already sitting on the PR head. Reviews only the PR diff, posts exactly one structured comment via post_pr_review.py, and reports verdict plus comment id back. Never spawn this for anything but a PR review.
+description: Cold-context code reviewer for one GitHub pull request in this repo (yani). Spawned by the github-pr-review skill, once or twice per round (model opus alone, or model sonnet and model opus), each in its own detached worktree already sitting on the PR head. Reviews only the PR diff, posts exactly one structured comment via post_pr_review.py, and reports verdict plus comment id back. Never spawn this for anything but a PR review.
 tools: Read, Glob, Grep, Write, Bash
 ---
 
