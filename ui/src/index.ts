@@ -1,4 +1,5 @@
 export { Badge, type BadgeProps, type BadgeTone } from './Badge/Badge'
+export { Board, type BoardProps, type BoardColumn, type BoardCard } from './Board/Board'
 export { Button, type ButtonProps, type ButtonSize, type ButtonVariant } from './Button/Button'
 export { Card, type CardProps } from './Card/Card'
 export { CustomerSwitcher, type CustomerSwitcherProps, type Customer } from './CustomerSwitcher/CustomerSwitcher'
