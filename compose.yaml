@@ -56,6 +56,15 @@ services:
       postgres:
         condition: service_healthy
 
+  portal:
+    build:
+      context: .
+      dockerfile: portal/Dockerfile
+    ports:
+      - "8080:80"
+    depends_on:
+      - todo-api
+
 volumes:
   neo4j-data:
   postgres-data:
