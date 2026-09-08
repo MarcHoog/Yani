@@ -65,7 +65,7 @@ below, then self-fix:
 5. After the 3rd round, or when the fixes of a round need a design decision, stop - even if
    findings remain. Report per model: verdict and comment url, the rounds used, what was fixed,
    what is open. Then ask the `github-pull-request` skill's "Next step?" question (2 agents /
-   1 agent / resolve comments / more changes / other) and wait.
+   1 agent / resolve comments / more changes / merged-clear / other) and wait.
 
 Never a 4th round on the same answer. Background job: the question goes on the `needs input:`
 line. Interactive: AskUserQuestion. Count rounds per loop, not per PR - a fresh review answer

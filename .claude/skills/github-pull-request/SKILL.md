@@ -101,8 +101,13 @@ PR #<n> ready: <url>. Next step?
 - Review with 1 agent (Opus only, faster)
 - Resolve comments (read PR feedback and address it)
 - Make more changes
+- PR merged - clear worktree
 - Other
 ```
+
+AskUserQuestion caps at 4 custom options ("Other" is added automatically): interactive
+sessions offer 2 agents / 1 agent / resolve comments / merged-clear, and "make more changes"
+arrives as free text via Other. A background job lists all six.
 
 Routing:
 
@@ -114,6 +119,14 @@ Routing:
 - **Resolve comments** - read the PR's feedback with the `github-pr-comments` skill, address it,
   push once, then ask this question again.
 - **Make more changes / Other** - do what the user says; after the next push, ask again.
+- **PR merged - clear worktree** - clean up after the merge, never perform the merge itself.
+  First confirm: `gh_api.py GET pulls/<n>` must show `"merged": true` - if not, report that and
+  ask again. Then from the main checkout: `git fetch --prune origin`, delete the local feature
+  branch (`git branch -d <branch>` - `-d`, never `-D`; an unmerged error is a finding to report),
+  and remove the feature worktree (`git -C <mainRoot> worktree remove <path>`) if the work lives
+  in one. Never force-remove a dirty worktree - report the leftover changes instead. Removing
+  the worktree the session itself runs in deletes its own cwd: make it the very last action and
+  say so in the report.
 
 Batch before you push: address all current findings and related docs locally, then push once. Every
 push costs one full review round, so one fix per push is the wrong cadence.
@@ -196,4 +209,4 @@ GitHub links it automatically; no API call needed.
 3. PR created with a conventional `type(scope): summary` title and the Plan / Changes / Remaining body.
 4. Issue referenced in the body if one exists.
 5. On resume: body PATCHed with latest progress.
-6. After the push: asked the "Next step?" question (2 agents / 1 agent / resolve comments / more changes / other) and stopped. Review launched only on an explicit review answer.
+6. After the push: asked the "Next step?" question (2 agents / 1 agent / resolve comments / more changes / merged-clear / other) and stopped. Review launched only on an explicit review answer.
