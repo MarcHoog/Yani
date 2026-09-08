@@ -28,5 +28,34 @@ services:
       neo4j:
         condition: service_healthy
 
+  postgres:
+    image: postgres:17-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: yani
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-yani-dev}
+      POSTGRES_DB: yani
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U yani -d yani"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  todo-api:
+    build:
+      context: .
+      dockerfile: todo-api/Dockerfile
+    ports:
+      - "8010:8010"
+    environment:
+      DATABASE_URL: postgresql://yani:${POSTGRES_PASSWORD:-yani-dev}@postgres:5432/yani
+    depends_on:
+      postgres:
+        condition: service_healthy
+
 volumes:
   neo4j-data:
+  postgres-data:
