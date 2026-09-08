@@ -36,4 +36,4 @@ tests\                          httpx ASGITransport, no lifespan, no db
 - Node props stay: id, name, created_at, updated_at. Anything else belongs in another store keyed by id.
 - Cypher only in `service.py`. Labels and relation types are interpolated from the catalog, never from raw input.
 - Errors raised only at boundary (router/service via HTTPException subclasses).
-- No auth yet. JWT via Zitadel JWKS comes with the shared python package. Do not add bypass flags.
+- No auth, by design. Single-user local app. Do not add auth scaffolding or bypass flags.

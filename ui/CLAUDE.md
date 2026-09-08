@@ -1,6 +1,6 @@
 # ui
 
-`@yani/ui`. React component library shared by staff portal and customer portal.
+`@yani/ui`. React component library for the yani portal (kanban board + graph explorer).
 
 ## Stack
 
@@ -37,7 +37,7 @@ gallery\                      dev page, discovers *.stories.tsx
 
 - Story file: `export default { title }`, every named export is one state, takes no props. Gallery and screenshot tests both read them.
 - Every component ships all four files. New component = copy the layout above, register in `src\index.ts`.
-- Only components used by more than one portal live here. A component with a single consumer stays in that portal until a second one needs it, then moves.
+- Only generic, reusable components live here. Anything specific to one portal page or domain feature stays in the portal.
 - Props in, callbacks out. No router, no fetch, no API types, no global state. Navigation is `href` plus `onNavigate` callback. Portals wire the router and the data.
 - Screenshot baselines live in `__screenshots__` next to the test and are committed. Rendered on Windows. Regenerate on the same OS.
 - Themes switch on `[data-theme]`, on any element, not only `html`. Gallery uses this to show both at once.

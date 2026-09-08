@@ -1,6 +1,6 @@
 # yani
 
-Personal project. Self-hosted MSP operating platform: graph SSOT + admin/staff portal + customer portal + ticketing + automations.
+Personal project. Self-hosted automation / todo kanban worker for one user (Marc): graph SSOT (work knowledge as a queryable graph instead of markdown) + todo kanban board + automations + MCP server so Claude Desktop/Code can query and work the board directly.
 Monorepo. This folder is the git repo and the agentic workspace. Sub-agents get cwd pinned to one component folder.
 
 ## Scope override: personal project, not work
@@ -8,7 +8,7 @@ Monorepo. This folder is the git repo and the agentic workspace. Sub-agents get 
 This repo is NOT a work project. The user's global `~/.claude/CLAUDE.md` contains work-only rules. Inside this repo:
 
 - IGNORE global Azure DevOps rules. No AzDO, no `azdo-pull-request` skill, no AzDO PR conventions.
-- IGNORE global "Bicep for infrastructure" default. Infra here is Docker Compose + Traefik config.
+- IGNORE global "Bicep for infrastructure" default. Infra here is Docker Compose.
 - IGNORE global "PowerShell, never Python/Node" default. Backend is Python (FastAPI), frontend is TypeScript. PowerShell only for repo helper scripts.
 - IGNORE any Azure MCP / Azure best-practice tool nudges. Do not call Azure tools for this repo.
 - KEEP: read before edit, implement exactly what was asked, no extra abstractions, error handling only at boundaries, state plan before changes, concise responses, no emojis, CRLF, Windows paths in scripts.
@@ -19,27 +19,27 @@ Preferred: run `.\claude.ps1` before starting Claude. It toggles `CLAUDE_CONFIG_
 ## Hard constraints
 
 - Zero Azure services or integrations in the product stack. No Entra, Azure APIM, App Service, Key Vault, Azure Monitor.
-- Azure is allowed only as a TARGET of automations later (Prefect flows acting on customer tenants). Keep behind adapters.
+- Azure is allowed only as a TARGET of automations later (Prefect flows acting on work tenants/systems). Keep behind adapters.
 - Everything runs as containers. Dev = `docker compose up`. Prod = same images, any container host.
 - Internet and public registries (Docker Hub, npm, PyPI) are fine. No SaaS dependencies in the product.
 
-## Decisions (2026-09-03)
+## Decisions (2026-09-03, repivoted 2026-09-08)
 
 | Concern | Decision |
 |---|---|
 | Layout | Monorepo, one folder per component |
 | Backend | Python, FastAPI, uv workspace |
 | Frontend | TypeScript, React, Vite, pnpm workspaces |
-| SSOT store | Neo4j. Nodes = identity + relationships only (stable ID, name, type). No detail payloads. |
-| Ticket store | Postgres. Structured fields as columns, text/comments/bodies as JSONB. No separate document DB. |
-| Entity ownership | Every entity has one home DB. Other DBs store only its ID. Ticket lives in Postgres, Neo4j gets edge stub after commit. ULIDs everywhere. |
-| UIs | Two: staff portal (SSOT admin + ticketing) and customer portal (read-only view + tickets + self-service) |
-| Gateway | Traefik. Portals call APIs via gateway hostnames, same URLs dev and prod. |
-| Identity | Zitadel container. Services validate JWT via JWKS only. Local users seeded for dev. |
-| Login UI | Zitadel hosted login, branded to the theme (logo, colors, font). Portals redirect, never render credential forms. No custom login UI. |
-| Automations | Mock executor first, Prefect server container later. Keep executor interface stable. |
+| SSOT store | Neo4j. Nodes = identity + relationships only (stable ID, name, type). No detail payloads. Catalog to be repurposed from MSP entities to Marc's work landscape. |
+| Todo store | Postgres. Cards on a kanban board. Structured fields as columns, text/comments/bodies as JSONB. Columns are data rows, not an enum. No separate document DB. |
+| Entity ownership | Every entity has one home DB. Other DBs store only its ID. Card lives in Postgres, Neo4j gets edge stub after commit. ULIDs everywhere. |
+| UI | One portal: kanban board + graph explorer, same style system. |
+| AI interface | `mcp-server` component: thin MCP adapter (streamable HTTP, localhost) over the REST APIs. Claude Desktop/Code connect via subscription — no API key on this path. No model calls inside yani itself for now. |
+| Gateway | None for now. Plain localhost ports. Reverse proxy returns only if the stack ever serves more than one machine. |
+| Identity | None. Single user, local network only. No auth code, no bypass flags to remove later. |
+| Automations | Mock executor first, Prefect server container later. Keep executor interface stable. Automations may create/move cards. |
 | API contract | OpenAPI from FastAPI. TS clients generated, never hand-written. |
-| Shared code | Python shared package (auth/JWT, settings, logging, db clients). React component library. |
+| Shared code | Python shared package (settings, logging, db clients). React component library. |
 | Attachments | MinIO (S3 API) when needed. |
 | Mail | Mailpit in dev. |
 
@@ -61,4 +61,4 @@ Reference POC (read-only, do not modify): `C:\dev personal\personal-website\.pla
 - Each component folder gets its own `CLAUDE.md` (stack, run, test, boundaries). Sub-agents read that first.
 - Root helper script: `dev.ps1` (up, down, seed, logs, test). Agents use it, not raw docker commands.
 - Python: ruff, strict Pydantic, type hints everywhere. TS: strict mode.
-- No auth bypasses in code. Dev uses real Zitadel with seeded users.
+- No auth in the product at all (single user, local). Do not add auth scaffolding, middleware, or bypass flags.

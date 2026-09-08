@@ -8,7 +8,7 @@ Tonal, rounded, icon-led. Hierarchy through shade and space, not borders or colo
 
 ## Why
 
-Yani is a tool people open every day: MSP staff for hours, customers when something is wrong. Admin consoles tend to shout: uppercase labels, monospace ids, colored active states, borders around everything. That reads as technical and slightly hostile. The reference we chose (a rounded icon-led side panel) reads as calm and friendly instead. The difference is not decoration. It is fewer signals, each one meaning something.
+Yani is a tool opened every day, for hours: a personal board and knowledge graph for work. Admin consoles tend to shout: uppercase labels, monospace ids, colored active states, borders around everything. That reads as technical and slightly hostile. The reference we chose (a rounded icon-led side panel) reads as calm and friendly instead. The difference is not decoration. It is fewer signals, each one meaning something.
 
 Close cousins: Linear, Notion's sidebar, Apple System Settings. Not Material, not brutalist, not glassmorphism.
 
@@ -106,7 +106,7 @@ The sidebar carries its own `--sb-*` ladder because it is one step darker than t
 | Show `-` for a missing value | Leave the cell empty |
 | Use a tonal badge for "Waiting" | Use an orange outlined mono badge |
 | Give the danger button a tinted fill | Make every destructive button solid red |
-| Keep one accent | Introduce a second brand color for the customer portal |
+| Keep one accent | Introduce a second brand color for another view |
 
 ## When a new component is needed
 
