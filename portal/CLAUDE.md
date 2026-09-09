@@ -28,8 +28,10 @@ src\App.tsx             Sidebar + main region
 src\app.css             app shell layout, page-level classes
 src\api\schema.d.ts     GENERATED from todo-api openapi.json. Never edit; pnpm gen:api
 src\api\client.ts       openapi-fetch client, relative base url
-src\board\useBoard.ts   board state: load, add card, move card (optimistic + reload)
-src\board\BoardPage.tsx page: PageHeader, composer, Board wiring
+src\board\useBoard.ts   board state: load, add card, move card (optimistic + reload), update card
+src\board\BoardPage.tsx page: PageHeader, composer, Board and CardPanel wiring
+src\board\CardPanel.tsx card detail in a SidePanel: title, description, todo, comments
+src\board\cardBody.ts   the `{description, todos, comments}` shape stored in the card `body` JSONB
 ```
 
 ## Rules
@@ -38,4 +40,5 @@ src\board\BoardPage.tsx page: PageHeader, composer, Board wiring
 - API types come from `pnpm gen:api` against a running todo-api. Never hand-write request/response types. Changed the API? Regenerate and commit.
 - Generic visuals belong in `ui\` (`@yani/ui`); this package only composes them and wires data. Style rules: `ui\CLAUDE.md`, `docs\style.md`.
 - Domain icons (lucide) are chosen here and passed into ui components as props.
+- Card detail (description, todo, comments) lives in the card `body` JSONB, parsed in `cardBody.ts`. `writeCardDetail` keeps unknown keys because PATCH replaces the whole `body`.
 - No auth, by design. Single-user local app.

@@ -40,3 +40,91 @@ body,
   color: var(--text-muted);
   font-size: 0.88rem;
 }
+
+.card-panel-title {
+  width: 100%;
+  height: 32px;
+  padding: 0 8px;
+  border: none;
+  border-radius: 8px;
+  background-color: transparent;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text-h);
+  outline: none;
+  transition: background-color 0.15s ease;
+}
+
+.card-panel-title:hover {
+  background-color: var(--surface-subtle);
+}
+
+.card-panel-title:focus {
+  background-color: var(--surface-subtle);
+  box-shadow: 0 0 0 1px var(--accent), 0 0 0 4px var(--accent-dim);
+}
+
+.card-panel-section + .card-panel-section {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+}
+
+.card-panel-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 30px;
+}
+
+.card-panel-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: normal;
+  color: var(--text-muted);
+}
+
+.card-panel-section > .card-panel-label {
+  margin-bottom: 10px;
+}
+
+.card-panel-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.card-panel-none {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.card-panel-comment {
+  padding: 10px 14px;
+  border-radius: 8px;
+  background-color: var(--surface-subtle);
+}
+
+.card-panel-comment + .card-panel-comment {
+  margin-top: 8px;
+}
+
+.card-panel-comment-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+
+.card-panel-comment-when {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.card-panel-composer {
+  margin-top: 16px;
+}

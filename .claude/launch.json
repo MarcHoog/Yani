@@ -6,6 +6,12 @@
       "runtimeExecutable": "npx",
       "runtimeArgs": ["--yes", "pnpm@10", "--dir", "ui", "dev"],
       "port": 5173
+    },
+    {
+      "name": "portal",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["--yes", "pnpm@10", "--dir", "portal", "dev"],
+      "port": 5174
     }
   ]
 }
