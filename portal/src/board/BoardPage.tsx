@@ -1,13 +1,18 @@
 import { useState, type FormEvent } from 'react'
 import { Plus } from 'lucide-react'
 import { Board, Button, Card, Field, Input, Notice, PageHeader, Select } from '@yani/ui'
+import { CardPanel } from './CardPanel'
+import { cardMeta } from './cardMeta'
 import { useBoard } from './useBoard'
 
 export function BoardPage() {
-  const { board, error, addCard, moveCard } = useBoard()
+  const { board, error, addCard, moveCard, updateCard } = useBoard()
   const [composing, setComposing] = useState(false)
   const [title, setTitle] = useState('')
   const [columnId, setColumnId] = useState('')
+  const [openId, setOpenId] = useState<string | null>(null)
+  const [panelOpen, setPanelOpen] = useState(false)
+  const openCard = board?.columns.flatMap((column) => column.cards).find((card) => card.id === openId)
 
   async function submit(event: FormEvent) {
     event.preventDefault()
@@ -83,11 +88,17 @@ export function BoardPage() {
           columns={board.columns.map((column) => ({
             id: column.id,
             title: column.title,
-            cards: column.cards.map((card) => ({ id: card.id, title: card.title })),
+            cards: column.cards.map((card) => ({ id: card.id, title: card.title, meta: cardMeta(card) })),
           }))}
+          onCardClick={(cardId) => {
+            setOpenId(cardId)
+            setPanelOpen(true)
+          }}
           onCardMove={(cardId, toColumnId) => void moveCard(cardId, toColumnId)}
         />
       )}
+
+      <CardPanel card={openCard} open={panelOpen} onClose={() => setPanelOpen(false)} onSave={updateCard} />
     </>
   )
 }

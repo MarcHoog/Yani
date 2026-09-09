@@ -3,6 +3,7 @@ import { api } from '../api/client'
 import type { components } from '../api/schema'
 
 export type BoardData = components['schemas']['Board']
+export type CardUpdate = components['schemas']['CardUpdate']
 
 export function useBoard() {
   const [board, setBoard] = useState<BoardData | null>(null)
@@ -57,5 +58,17 @@ export function useBoard() {
     [reload],
   )
 
-  return { board, error, reload, addCard, moveCard }
+  const updateCard = useCallback(
+    async (cardId: string, patch: CardUpdate) => {
+      const { data } = await api.PATCH('/api/v1/cards/{card_id}', {
+        params: { path: { card_id: cardId } },
+        body: patch,
+      })
+      if (!data) setError('Could not save the card')
+      await reload()
+    },
+    [reload],
+  )
+
+  return { board, error, reload, addCard, moveCard, updateCard }
 }
