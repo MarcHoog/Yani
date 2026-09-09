@@ -1,0 +1,102 @@
+.y-board {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.y-board-column {
+  flex: 0 0 280px;
+  min-width: 0;
+}
+
+.y-board-column-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+}
+
+.y-board-column-title {
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: normal;
+  color: var(--text-muted);
+}
+
+.y-board-column-count {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.y-board-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 6px;
+  border-radius: var(--radius-lg);
+  min-height: 72px;
+}
+
+.y-board-cards--over {
+  background-color: var(--surface-hover);
+}
+
+.y-board-none {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.y-board-card {
+  padding: 12px 14px;
+  border-radius: var(--radius-lg);
+  background-color: var(--surface);
+  cursor: default;
+}
+
+.y-board-card[draggable='true'] {
+  cursor: grab;
+}
+
+.y-board-card[role='button']:hover {
+  background-color: var(--surface-subtle);
+}
+
+.y-board-card:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.y-board-card-title {
+  font-size: 0.88rem;
+  font-weight: 500;
+  line-height: 1.45;
+  color: var(--text-h);
+}
+
+.y-board-card-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.y-board-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.y-board-card-meta svg {
+  width: 14px;
+  height: 14px;
+}

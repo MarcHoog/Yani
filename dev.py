@@ -8,6 +8,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 COMPOSE = ROOT / "compose.yaml"
 COMMANDS = ("up", "down", "logs", "test", "seed")
+APIS = ("ssot-api", "todo-api")
 
 
 def run(cmd: list[str], cwd: Path = ROOT) -> int:
@@ -35,7 +36,11 @@ def main() -> int:
     if command == "logs":
         return run([*compose, "logs", "-f", *rest])
     if command == "test":
-        return run(["uv", "run", "pytest", *rest], cwd=ROOT / "ssot-api")
+        for api in APIS:
+            code = run(["uv", "run", "pytest", *rest], cwd=ROOT / api)
+            if code != 0:
+                return code
+        return 0
     print("No seeder yet.")
     return 0
 
