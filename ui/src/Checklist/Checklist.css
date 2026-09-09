@@ -1,0 +1,67 @@
+.y-check {
+  display: flex;
+  flex-direction: column;
+}
+
+.y-check-progress {
+  padding-bottom: 6px;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.y-check-empty {
+  padding: 6px 0 10px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.y-check-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 4px 0 8px;
+  border-radius: 8px;
+  transition: background-color 0.15s ease;
+}
+
+.y-check-row:hover {
+  background-color: var(--surface-subtle);
+}
+
+.y-check-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+  padding: 10px 0;
+  cursor: pointer;
+}
+
+.y-check-box {
+  width: 17px;
+  height: 17px;
+  flex: none;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.y-check-text {
+  font-size: 0.88rem;
+  line-height: 1.45;
+  color: var(--text-h);
+}
+
+.y-check-row--done .y-check-text {
+  color: var(--text-muted);
+  text-decoration: line-through;
+}
+
+.y-check-add {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}

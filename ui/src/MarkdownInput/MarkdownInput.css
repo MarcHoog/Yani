@@ -1,0 +1,44 @@
+.y-mdin {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.y-mdin-tabs {
+  display: flex;
+  align-self: flex-start;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 8px;
+  background-color: var(--surface-subtle);
+}
+
+.y-mdin-tab {
+  height: 26px;
+  padding: 0 10px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: none;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.y-mdin-tab:hover {
+  color: var(--text-h);
+}
+
+.y-mdin-tab[aria-pressed='true'] {
+  background-color: var(--surface);
+  font-weight: 600;
+  color: var(--text-h);
+}
+
+.y-mdin-preview {
+  min-height: 88px;
+  padding: 9px 12px;
+  border-radius: 8px;
+  background-color: var(--surface-subtle);
+}
