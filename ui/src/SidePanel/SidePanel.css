@@ -42,6 +42,13 @@
 .y-panel-layer--full .y-panel {
   width: min(920px, 100%);
   border-radius: var(--radius-lg);
+  transform: none;
+  opacity: 0;
+  transition: opacity 0.22s ease, visibility 0.22s, width 0.22s ease, border-radius 0.22s ease;
+}
+
+.y-panel-layer--full.y-panel-layer--open .y-panel {
+  opacity: 1;
 }
 
 .y-panel-head {
