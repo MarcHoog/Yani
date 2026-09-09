@@ -74,6 +74,7 @@ All in `ui\src\theme.css`. Portals import it once.
 | `--danger` / `--danger-dim` | `#c9372c` | `#ff6b5e` | disabled, failed, over limit |
 | `--radius-lg` / `--radius` / `--radius-sm` | 16 / 10 / 6 | | 16 for surfaces, 8 (literal) for controls |
 | `--shadow-lg` | | | floating layers only |
+| `--scrim` | `rgba(9,30,66,.36)` | `rgba(0,0,0,.55)` | dims the page behind a fullscreen panel |
 
 The sidebar carries its own `--sb-*` ladder because it is one step darker than the page in light and near-black in dark. Everything else uses the shared tokens.
 

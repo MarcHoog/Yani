@@ -1,0 +1,76 @@
+.y-panel-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  justify-content: flex-end;
+  pointer-events: none;
+  background-color: transparent;
+  transition: background-color 0.22s ease;
+}
+
+.y-panel-layer--full {
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+}
+
+.y-panel-layer--full.y-panel-layer--open {
+  pointer-events: auto;
+  background-color: var(--scrim);
+}
+
+.y-panel {
+  display: flex;
+  flex-direction: column;
+  width: min(460px, 100%);
+  height: 100%;
+  pointer-events: auto;
+  visibility: hidden;
+  transform: translateX(100%);
+  border-radius: var(--radius-lg) 0 0 var(--radius-lg);
+  background-color: var(--surface);
+  box-shadow: var(--shadow-lg);
+  transition: transform 0.22s ease, visibility 0.22s, width 0.22s ease, border-radius 0.22s ease;
+}
+
+.y-panel-layer--open .y-panel {
+  visibility: visible;
+  transform: translateX(0);
+}
+
+.y-panel-layer--full .y-panel {
+  width: min(920px, 100%);
+  border-radius: var(--radius-lg);
+}
+
+.y-panel-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+  padding: 12px 12px 12px 20px;
+  border-bottom: 1px solid var(--line);
+}
+
+.y-panel-title {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text-h);
+}
+
+.y-panel-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.y-panel-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 20px;
+}

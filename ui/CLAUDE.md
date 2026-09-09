@@ -49,7 +49,7 @@ gallery\                      dev page, discovers *.stories.tsx
 Tonal, rounded, icon-led. Hierarchy through shade and space, not borders or color. Accent only for identity, primary action and signals. Long form with rationale: `docs\style.md`. Every new component follows these or does not merge.
 
 - Neutral ladder from `theme.css`: `--bg` page, `--surface` card, `--surface-subtle` control, `--surface-hover` hover. Sidebar has its own darker ladder (`--sb-*`). No other grays.
-- No borders on surfaces or controls. Hairline `--line` only to split rows or groups. No `box-shadow` on surfaces. `--shadow-lg` only on things that float (popovers, menus).
+- No borders on surfaces or controls. Hairline `--line` only to split rows or groups. No `box-shadow` on surfaces. `--shadow-lg` only on things that float (popovers, menus, panels). `--scrim` dims the page behind a fullscreen panel and nowhere else.
 - Radius: 16 (`--radius-lg`) for cards, panels, tables. 8 for buttons, inputs, rows, tiles. 999 for badges and meters. Nothing else.
 - Rows are 44px. Buttons and inputs 36px (`sm` 30px). Icons 20-22px in rows, 18px in buttons, 16px `sm`.
 - Text is sentence case everywhere. No `text-transform: uppercase`, no `letter-spacing` tracking on labels, no `--mono` outside code and ids.
