@@ -1,0 +1,42 @@
+html,
+body,
+#root {
+  height: 100%;
+}
+
+.app {
+  display: flex;
+  height: 100%;
+}
+
+.app-main {
+  flex: 1;
+  min-width: 0;
+  padding: 24px 28px;
+  overflow: auto;
+}
+
+.board-error {
+  margin-bottom: 16px;
+}
+
+.board-composer {
+  margin-bottom: 16px;
+}
+
+.board-composer-form {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.board-composer-title {
+  flex: 1;
+  min-width: 220px;
+}
+
+.board-loading {
+  color: var(--text-muted);
+  font-size: 0.88rem;
+}

@@ -15,8 +15,10 @@ switch ($Command) {
     'down' { docker compose -f $compose down @Rest }
     'logs' { docker compose -f $compose logs -f @Rest }
     'test' {
-        Push-Location (Join-Path $PSScriptRoot 'ssot-api')
-        try { uv run pytest @Rest } finally { Pop-Location }
+        foreach ($api in 'ssot-api', 'todo-api') {
+            Push-Location (Join-Path $PSScriptRoot $api)
+            try { uv run pytest @Rest } finally { Pop-Location }
+        }
     }
     'seed' { Write-Host 'No seeder yet.' }
 }

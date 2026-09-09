@@ -50,6 +50,8 @@ Building up slowly, design first. Architecture lives in `docs\architecture.md` (
 Scaffolded so far:
 - `ui\` (`@yani/ui` component library, pnpm workspace root at repo root). See `ui\CLAUDE.md`.
 - `ssot-api\` (FastAPI + Neo4j, uv workspace root at repo root, `compose.yaml` with neo4j + ssot-api, `dev.ps1`). See `ssot-api\CLAUDE.md`.
+- `todo-api\` (FastAPI + Postgres, kanban columns and cards, port 8010, postgres + todo-api in `compose.yaml`). See `todo-api\CLAUDE.md`.
+- `portal\` (`@yani/portal`, the one UI: kanban board page on todo-api, port 8080 in compose / 5174 dev). See `portal\CLAUDE.md`.
 
 UI style: `docs\style.md` (principles, tokens, scale, for humans). Agent rules distilled in `ui\CLAUDE.md` under Style. Anything visual follows both.
 
