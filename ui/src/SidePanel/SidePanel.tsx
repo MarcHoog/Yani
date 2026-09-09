@@ -19,16 +19,16 @@ export function SidePanel({ open, label, onClose, title, actions, defaultFullscr
 
   useEffect(() => {
     if (!open) return
-    const closeOutside = (event: PointerEvent) => {
+    const closeOutside = (event: MouseEvent) => {
       if (!panel.current?.contains(event.target as Node)) onClose()
     }
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') onClose()
     }
-    document.addEventListener('pointerdown', closeOutside)
+    document.addEventListener('click', closeOutside, true)
     document.addEventListener('keydown', closeOnEscape)
     return () => {
-      document.removeEventListener('pointerdown', closeOutside)
+      document.removeEventListener('click', closeOutside, true)
       document.removeEventListener('keydown', closeOnEscape)
     }
   }, [open, onClose])

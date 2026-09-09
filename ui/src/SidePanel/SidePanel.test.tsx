@@ -29,7 +29,7 @@ test('close button calls onClose', async () => {
   expect(onClose).toHaveBeenCalled()
 })
 
-test('pointer down outside the panel calls onClose', async () => {
+test('a click outside the panel calls onClose', async () => {
   const onClose = vi.fn()
   await render(
     <SidePanel open label="Card" title="Ship the board" onClose={onClose}>
@@ -37,9 +37,48 @@ test('pointer down outside the panel calls onClose', async () => {
     </SidePanel>,
   )
 
-  document.body.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }))
+  document.body.dispatchEvent(new MouseEvent('click', { bubbles: true }))
 
   expect(onClose).toHaveBeenCalled()
+})
+
+test('a click inside the panel leaves it open', async () => {
+  const onClose = vi.fn()
+  const screen = await render(
+    <SidePanel open label="Card" title="Ship the board" onClose={onClose}>
+      <p>Card details</p>
+    </SidePanel>,
+  )
+
+  await screen.getByText('Card details').click()
+
+  expect(onClose).not.toHaveBeenCalled()
+})
+
+test('the outside click is seen before a handler that reopens the panel', async () => {
+  const onClose = vi.fn()
+  const outside = document.createElement('button')
+  document.body.appendChild(outside)
+  const order: string[] = []
+  outside.addEventListener('click', () => order.push('handler'))
+  await render(
+    <SidePanel
+      open
+      label="Card"
+      title="Ship the board"
+      onClose={() => {
+        order.push('close')
+        onClose()
+      }}
+    >
+      <p>Card details</p>
+    </SidePanel>,
+  )
+
+  outside.click()
+  outside.remove()
+
+  expect(order).toEqual(['close', 'handler'])
 })
 
 test('escape calls onClose', async () => {
@@ -66,7 +105,7 @@ test('a closed panel stays out of reach', async () => {
   expect(screen.container.querySelector('.y-panel-layer--open')).toBeNull()
   expect(screen.container.querySelector('[inert]')).not.toBeNull()
 
-  document.body.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }))
+  document.body.dispatchEvent(new MouseEvent('click', { bubbles: true }))
 
   expect(onClose).not.toHaveBeenCalled()
 })
