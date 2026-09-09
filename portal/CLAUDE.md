@@ -32,6 +32,7 @@ src\board\useBoard.ts   board state: load, add card, move card (optimistic + rel
 src\board\BoardPage.tsx page: PageHeader, composer, Board and CardPanel wiring
 src\board\CardPanel.tsx card detail in a SidePanel: title, description, todo, comments
 src\board\cardBody.ts   the `{description, todos, comments}` shape stored in the card `body` JSONB
+src\board\cardMeta.tsx  todo progress and comment count shown on the board card
 ```
 
 ## Rules

@@ -128,3 +128,9 @@ body,
 .card-panel-composer {
   margin-top: 16px;
 }
+
+.board-card-meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}

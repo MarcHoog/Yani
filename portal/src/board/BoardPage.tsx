@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { Plus } from 'lucide-react'
 import { Board, Button, Card, Field, Input, Notice, PageHeader, Select } from '@yani/ui'
 import { CardPanel } from './CardPanel'
+import { cardMeta } from './cardMeta'
 import { useBoard } from './useBoard'
 
 export function BoardPage() {
@@ -87,7 +88,7 @@ export function BoardPage() {
           columns={board.columns.map((column) => ({
             id: column.id,
             title: column.title,
-            cards: column.cards.map((card) => ({ id: card.id, title: card.title })),
+            cards: column.cards.map((card) => ({ id: card.id, title: card.title, meta: cardMeta(card) })),
           }))}
           onCardClick={(cardId) => {
             setOpenId(cardId)
