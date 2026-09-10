@@ -1,18 +1,26 @@
 import { useState, type FormEvent } from 'react'
 import { Plus } from 'lucide-react'
-import { Board, Button, Card, Field, Input, Notice, PageHeader, Select } from '@yani/ui'
+import { Board, Button, Card, Field, Inbox, Input, Notice, PageHeader, Select } from '@yani/ui'
+import { InboxItemPanel } from '../inbox/InboxItemPanel'
+import { INBOX_DRAG_TYPE, readDescription } from '../inbox/inboxItem'
+import { useInbox } from '../inbox/useInbox'
 import { CardPanel } from './CardPanel'
 import { cardMeta } from './cardMeta'
 import { useBoard } from './useBoard'
 
 export function BoardPage() {
-  const { board, error, addCard, moveCard, updateCard } = useBoard()
+  const { board, error, reload, addCard, moveCard, updateCard } = useBoard()
+  const inbox = useInbox(reload)
   const [composing, setComposing] = useState(false)
   const [title, setTitle] = useState('')
   const [columnId, setColumnId] = useState('')
   const [openId, setOpenId] = useState<string | null>(null)
   const [panelOpen, setPanelOpen] = useState(false)
+  const [openItemId, setOpenItemId] = useState<string | null>(null)
+  const [itemPanelOpen, setItemPanelOpen] = useState(false)
   const openCard = board?.columns.flatMap((column) => column.cards).find((card) => card.id === openId)
+  const openItem = inbox.items?.find((item) => item.id === openItemId)
+  const problem = error ?? inbox.error
 
   async function submit(event: FormEvent) {
     event.preventDefault()
@@ -41,9 +49,9 @@ export function BoardPage() {
         }
       />
 
-      {error && (
+      {problem && (
         <div className="board-error">
-          <Notice tone="danger">{error}</Notice>
+          <Notice tone="danger">{problem}</Notice>
         </div>
       )}
 
@@ -81,24 +89,55 @@ export function BoardPage() {
         </div>
       )}
 
-      {!board && !error && <p className="board-loading">Loading the board...</p>}
-
-      {board && (
-        <Board
-          columns={board.columns.map((column) => ({
-            id: column.id,
-            title: column.title,
-            cards: column.cards.map((card) => ({ id: card.id, title: card.title, meta: cardMeta(card) })),
-          }))}
-          onCardClick={(cardId) => {
-            setOpenId(cardId)
-            setPanelOpen(true)
-          }}
-          onCardMove={(cardId, toColumnId) => void moveCard(cardId, toColumnId)}
-        />
-      )}
+      <div className="board-layout">
+        <div className="board-inbox">
+          <Inbox
+            items={(inbox.items ?? []).map((item) => ({
+              id: item.id,
+              title: item.title,
+              description: readDescription(item.body),
+            }))}
+            dragType={INBOX_DRAG_TYPE}
+            onAdd={(text) => void inbox.addItem(text)}
+            onItemClick={(itemId) => {
+              setOpenItemId(itemId)
+              setItemPanelOpen(true)
+              setPanelOpen(false)
+            }}
+            onRemove={(itemId) => void inbox.removeItem(itemId)}
+          />
+        </div>
+        <div className="board-lanes">
+          {!board && !error && <p className="board-loading">Loading the board...</p>}
+          {board && (
+            <Board
+              columns={board.columns.map((column) => ({
+                id: column.id,
+                title: column.title,
+                cards: column.cards.map((card) => ({ id: card.id, title: card.title, meta: cardMeta(card) })),
+              }))}
+              onCardClick={(cardId) => {
+                setOpenId(cardId)
+                setPanelOpen(true)
+                setItemPanelOpen(false)
+              }}
+              onCardMove={(cardId, toColumnId) => void moveCard(cardId, toColumnId)}
+              accept={INBOX_DRAG_TYPE}
+              onDrop={(itemId, target) =>
+                void (target.cardId ? inbox.attach(itemId, target.cardId) : inbox.promote(itemId, target.columnId))
+              }
+            />
+          )}
+        </div>
+      </div>
 
       <CardPanel card={openCard} open={panelOpen} onClose={() => setPanelOpen(false)} onSave={updateCard} />
+      <InboxItemPanel
+        item={openItem}
+        open={itemPanelOpen}
+        onClose={() => setItemPanelOpen(false)}
+        onSave={inbox.updateItem}
+      />
     </>
   )
 }

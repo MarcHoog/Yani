@@ -1,6 +1,6 @@
 # portal
 
-`@yani/portal`. The one yani UI: kanban board now, graph explorer later. Composes `@yani/ui` components; talks to todo-api.
+`@yani/portal`. The one yani UI: kanban board with an inbox now, graph explorer later. Composes `@yani/ui` components; talks to todo-api.
 
 ## Stack
 
@@ -33,6 +33,9 @@ src\board\BoardPage.tsx page: PageHeader, composer, Board and CardPanel wiring
 src\board\CardPanel.tsx card detail in a SidePanel: title, description, todo, comments
 src\board\cardBody.ts   the `{description, todos, comments}` shape stored in the card `body` JSONB
 src\board\cardMeta.tsx  todo progress and comment count shown on the board card
+src\inbox\useInbox.ts  inbox state: load, add, update, remove, promote to a column, attach to a card
+src\inbox\inboxItem.ts drag type and the `{description}` shape stored in the inbox item `body`
+src\inbox\InboxItemPanel.tsx inbox item detail in a SidePanel: title, description
 ```
 
 ## Rules
@@ -42,4 +45,5 @@ src\board\cardMeta.tsx  todo progress and comment count shown on the board card
 - Generic visuals belong in `ui\` (`@yani/ui`); this package only composes them and wires data. Style rules: `ui\CLAUDE.md`, `docs\style.md`.
 - Domain icons (lucide) are chosen here and passed into ui components as props.
 - Card detail (description, todo, comments) lives in the card `body` JSONB, parsed in `cardBody.ts`. `writeCardDetail` keeps unknown keys because PATCH replaces the whole `body`.
+- The inbox sits left of the board and is not a column. Dragging an item onto a column calls `promote` (new card), onto a card calls `attach` (todo + comment). Both are todo-api endpoints; the portal only reloads afterwards.
 - No auth, by design. Single-user local app.
