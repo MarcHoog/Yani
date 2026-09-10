@@ -1,6 +1,6 @@
 # todo-api
 
-Todo board service. Postgres holds the kanban board: columns and cards as data rows, ULIDs, bodies as JSONB. Columns are rows, not an enum.
+Todo board service. Postgres holds the kanban board: columns and cards as data rows, ULIDs, bodies as JSONB. Columns are rows, not an enum. Next to the board sits the inbox: flat capture items (title + body) that get promoted to a card or attached to one.
 
 ## Stack
 
@@ -34,6 +34,7 @@ tests\                          httpx ASGITransport, no lifespan, no db
 - Structured fields are columns; free-form text/comments/bodies go in the `body` JSONB.
 - SQL only in `service.py`, always parameterized.
 - Card move = PATCH with `column_id`; without an explicit `position` the card appends to the end of the target column.
+- Inbox items are not cards. `promote` turns one into a new card in a column (title and body copied), `attach` folds one into an existing card: the title becomes a `body.todos` entry, a non-empty `body.description` becomes a `body.comments` entry. Both delete the item in the same transaction. This is the only place the API knows the card body shape (`todos: [{id, text, done}]`, `comments: [{id, text, at}]`), mirrored in `portal\src\board\cardBody.ts`.
 - Schema is created idempotently in lifespan (`CREATE TABLE IF NOT EXISTS`). No migrations tool yet; a breaking change needs one first.
 - Errors raised only at boundary (router/service via HTTPException subclasses).
 - No auth, by design. Single-user local app. Do not add auth scaffolding or bypass flags.

@@ -6,6 +6,7 @@ from fastapi import APIRouter, FastAPI
 from todo_api.board import service
 from todo_api.board.router import router as board_router
 from todo_api.database import create_pool
+from todo_api.inbox.router import router as inbox_router
 
 
 @asynccontextmanager
@@ -22,6 +23,7 @@ app = FastAPI(title="yani todo-api", version="0.1.0", lifespan=lifespan)
 
 api = APIRouter(prefix="/api/v1")
 api.include_router(board_router)
+api.include_router(inbox_router)
 app.include_router(api)
 
 

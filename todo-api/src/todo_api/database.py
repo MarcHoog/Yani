@@ -27,6 +27,15 @@ CREATE TABLE IF NOT EXISTS cards (
 );
 
 CREATE INDEX IF NOT EXISTS cards_column_idx ON cards (column_id, position);
+
+CREATE TABLE IF NOT EXISTS inbox_items (
+    id text PRIMARY KEY,
+    title text NOT NULL,
+    position integer NOT NULL,
+    body jsonb NOT NULL DEFAULT '{}'::jsonb,
+    created_at timestamptz NOT NULL DEFAULT now(),
+    updated_at timestamptz NOT NULL DEFAULT now()
+);
 """
 
 

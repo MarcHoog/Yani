@@ -116,6 +116,11 @@ place the graph model is defined.
 Kanban model: one board to start. Columns are data (Postgres rows with an order), not an
 enum, so the board is rearrangeable without migrations. A card's `status` is its column ID.
 
+Next to the board sits the inbox: flat capture items (title, description) in their own Postgres
+table, not a column. An item is either promoted to a new card in a column or attached to an
+existing card, where its title becomes a todo and its description a comment. Both are single
+todo-api calls that delete the item in the same transaction.
+
 ## 4. Request flow: Claude works the board
 
 ```mermaid
