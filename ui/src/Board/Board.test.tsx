@@ -40,4 +40,34 @@ test('dropping a card on a column calls onCardMove', async () => {
   expect(onCardMove).toHaveBeenCalledWith('c1', 'done')
 })
 
+test('dropping a foreign item on a column calls onDrop with the column', async () => {
+  const onDrop = vi.fn()
+  const screen = await render(<Board columns={columns} accept="text/x-item" onDrop={onDrop} />)
+
+  const lane = screen.container.querySelector('[data-column="done"]')!
+  const dataTransfer = new DataTransfer()
+  dataTransfer.setData('text/x-item', 'i1')
+
+  lane.dispatchEvent(new DragEvent('drop', { dataTransfer, bubbles: true }))
+
+  expect(onDrop).toHaveBeenCalledWith('i1', { columnId: 'done' })
+})
+
+test('dropping a foreign item on a card calls onDrop with the card', async () => {
+  const onDrop = vi.fn()
+  const onCardMove = vi.fn()
+  const screen = await render(
+    <Board columns={columns} accept="text/x-item" onDrop={onDrop} onCardMove={onCardMove} />,
+  )
+
+  const card = screen.container.querySelector('[data-card="c1"]')!
+  const dataTransfer = new DataTransfer()
+  dataTransfer.setData('text/x-item', 'i1')
+
+  card.dispatchEvent(new DragEvent('drop', { dataTransfer, bubbles: true }))
+
+  expect(onDrop).toHaveBeenCalledWith('i1', { columnId: 'todo', cardId: 'c1' })
+  expect(onCardMove).not.toHaveBeenCalled()
+})
+
 screenshotStories(stories)
