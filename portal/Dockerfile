@@ -10,6 +10,6 @@ COPY portal portal
 RUN pnpm --filter @yani/portal build
 
 FROM nginx:1.29-alpine
-COPY portal/nginx.conf /etc/nginx/conf.d/default.conf
+COPY portal/nginx.conf.template /etc/nginx/templates/default.conf.template
 COPY --from=build /app/portal/dist /usr/share/nginx/html
 EXPOSE 80

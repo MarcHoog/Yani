@@ -8,7 +8,7 @@ React 19, Vite 8, TypeScript strict, pnpm workspace member. API types generated 
 
 ## Run
 
-From repo root: `.\dev.ps1 up` builds and serves everything; portal on http://localhost:8080 (nginx serves the build and proxies `/api` to todo-api).
+From repo root: `python dev.py up`, then `python dev.py seed`; portal on http://localhost:8080 (nginx serves the build, proxies `/api` to todo-api and renders `/auth-config.json` from env). Sign in with the seeded operator.
 Dev: `pnpm install` at repo root, start todo-api (see `todo-api\CLAUDE.md`), then from `portal\`: `pnpm dev` on http://localhost:5174 (vite proxies `/api` to localhost:8010).
 
 | command (from `portal\`) | does |
@@ -22,12 +22,15 @@ Dev: `pnpm install` at repo root, start todo-api (see `todo-api\CLAUDE.md`), the
 ## Layout
 
 ```
+nginx.conf.template     container nginx config, rendered with envsubst at start
 index.html              theme head script (copied from ui), root div
 src\main.tsx            imports @yani/ui theme.css and app.css, renders App
 src\App.tsx             Sidebar + main region
 src\app.css             app shell layout, page-level classes
 src\api\schema.d.ts     GENERATED from todo-api openapi.json. Never edit; pnpm gen:api
-src\api\client.ts       openapi-fetch client, relative base url
+src\api\client.ts       openapi-fetch client, relative base url, bearer token middleware (401 -> sign in)
+src\auth\auth.ts        oidc-client-ts UserManager from /auth-config.json: sign in, callback, sign out, token
+src\auth\AuthGate.tsx   renders the app only for a signed-in user, handles /auth/callback
 src\board\useBoard.ts   board state: load, add card, move card (optimistic + reload), update card
 src\board\BoardPage.tsx page: PageHeader, composer, Board and CardPanel wiring
 src\board\CardPanel.tsx card detail in a SidePanel: title, description, todo, comments
@@ -46,4 +49,4 @@ src\inbox\InboxItemPanel.tsx inbox item detail in a SidePanel: title, descriptio
 - Domain icons (lucide) are chosen here and passed into ui components as props.
 - Card detail (description, todo, comments) lives in the card `body` JSONB, parsed in `cardBody.ts`. `writeCardDetail` keeps unknown keys because PATCH replaces the whole `body`.
 - The inbox sits left of the board and is not a column. Dragging an item onto a column calls `promote` (new card), onto a card calls `attach` (todo + comment). Both are todo-api endpoints; the portal only reloads afterwards.
-- No auth yet. OIDC sign-in is roadmap slice 1 (`docs\architecture.md` section 2). Do not add bypass flags or a "dev without auth" mode.
+- Sign-in: OIDC code + PKCE against Zitadel (`docs\architecture.md` section 2). Issuer, client ID and project ID come from `/auth-config.json` at runtime (nginx template in the container, a vite plugin reading the root `.env` in dev), so one image fits every environment. Tokens live in sessionStorage. Every API call goes through `api` in `client.ts`, which adds the token. No bypass flags, no "dev without auth" mode.

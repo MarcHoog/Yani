@@ -1,0 +1,22 @@
+# Rendered by the nginx image at start (envsubst over /etc/nginx/templates/*.template). Only
+# variables set in the container environment are replaced, so nginx's own $uri stays as is.
+server {
+    listen 80;
+    root /usr/share/nginx/html;
+    index index.html;
+
+    # Public sign-in settings for the browser app. Nothing secret.
+    location = /auth-config.json {
+        default_type application/json;
+        add_header Cache-Control no-store;
+        return 200 '{"issuer":"${AUTH_ISSUER}","clientId":"${PORTAL_CLIENT_ID}","projectId":"${AUTH_AUDIENCE}"}';
+    }
+
+    location /api/ {
+        proxy_pass http://todo-api:8010;
+    }
+
+    location / {
+        try_files $uri /index.html;
+    }
+}

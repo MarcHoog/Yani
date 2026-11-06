@@ -69,12 +69,12 @@ def main() -> int:
             if code != 0:
                 return code
         return 0
-    # seed: bootstrap Zitadel (orgs, project, app, test users), then restart the APIs so they
-    # pick up AUTH_AUDIENCE and AUTH_OPERATOR_ORG from .env.
+    # seed: bootstrap Zitadel (orgs, project, app, test users), then restart the APIs and the
+    # portal so they pick up AUTH_AUDIENCE, AUTH_OPERATOR_ORG and PORTAL_CLIENT_ID from .env.
     code = run([sys.executable, str(ROOT / "seed_zitadel.py"), *rest])
     if code != 0:
         return code
-    return run([*compose, "up", "-d", "ssot-api", "todo-api"])
+    return run([*compose, "up", "-d", "ssot-api", "todo-api", "portal"])
 
 
 if __name__ == "__main__":
