@@ -7,6 +7,8 @@ from todo_api.board.schemas import Strict
 
 
 class InboxItemCreate(Strict):
+    # Required for operator tokens; customers may omit it (their own is used).
+    customer_id: str | None = None
     title: str = Field(min_length=1, max_length=300)
     body: dict[str, Any] = Field(default_factory=dict)
 
@@ -19,6 +21,7 @@ class InboxItemUpdate(Strict):
 
 class InboxItemRead(BaseModel):
     id: str
+    customer_id: str
     title: str
     position: int
     body: dict[str, Any]

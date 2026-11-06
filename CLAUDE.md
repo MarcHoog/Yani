@@ -56,11 +56,12 @@ Docs are the source of truth for direction; code still reflects the short-lived 
 
 Scaffolded so far:
 - `ui\` (`@yani/ui` component library, pnpm workspace root at repo root). See `ui\CLAUDE.md`.
+- `shared\` (`yani-shared` Python package: auth via JWKS, caller role and customer scoping). See `shared\CLAUDE.md`.
 - `ssot-api\` (FastAPI + Neo4j, the inventory; uv workspace root at repo root). See `ssot-api\CLAUDE.md`.
 - `todo-api\` (FastAPI + Postgres, board columns, cards, inbox; becomes requests). See `todo-api\CLAUDE.md`.
 - `portal\` (`@yani/portal`, becomes the operator console; board page today). See `portal\CLAUDE.md`.
 
-None of them has auth yet. That is slice 1 in the roadmap, not a design choice.
+ssot-api and todo-api require a valid token on every `/api/v1` route and scope everything by `customer_id` (slice 1, backend part). The portal has no sign-in yet, so it cannot talk to the APIs until slice 1 part 2. Auth config: root `.env` (see `.env.example`).
 
 UI style: `docs\style.md` (principles, tokens, scale, for humans). Agent rules distilled in `ui\CLAUDE.md` under Style. Anything visual follows both.
 

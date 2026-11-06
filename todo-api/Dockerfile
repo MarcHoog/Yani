@@ -3,9 +3,11 @@ COPY --from=ghcr.io/astral-sh/uv:0.11.1 /uv /usr/local/bin/uv
 ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy UV_PROJECT_ENVIRONMENT=/opt/venv
 WORKDIR /app
 COPY pyproject.toml uv.lock ./
+COPY shared/pyproject.toml shared/
 COPY ssot-api/pyproject.toml ssot-api/
 COPY todo-api/pyproject.toml todo-api/
 RUN uv sync --frozen --no-dev --no-install-workspace --package todo-api
+COPY shared shared
 COPY todo-api todo-api
 RUN uv sync --frozen --no-dev --package todo-api
 ENV PATH=/opt/venv/bin:$PATH

@@ -1,19 +1,18 @@
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
-from fastapi import APIRouter, FastAPI
+from fastapi import APIRouter, Depends, FastAPI
 
-from todo_api.board import service
+from todo_api.auth import CallerDep, auth
 from todo_api.board.router import router as board_router
 from todo_api.database import create_pool
 from todo_api.inbox.router import router as inbox_router
+from yani_shared.auth import Caller
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     pool = await create_pool()
-    async with pool.acquire() as conn:
-        await service.seed_columns(conn)
     app.state.pool = pool
     yield
     await pool.close()
@@ -21,7 +20,16 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 app = FastAPI(title="yani todo-api", version="0.1.0", lifespan=lifespan)
 
-api = APIRouter(prefix="/api/v1")
+# Every /api/v1 route requires a valid token, including ones added later.
+api = APIRouter(prefix="/api/v1", dependencies=[Depends(auth)])
+
+
+@api.get("/me", tags=["auth"])
+async def me(caller: CallerDep) -> Caller:
+    """The caller as this service sees it. ssot-api resolves customer tokens through this."""
+    return caller
+
+
 api.include_router(board_router)
 api.include_router(inbox_router)
 app.include_router(api)

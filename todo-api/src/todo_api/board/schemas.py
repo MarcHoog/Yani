@@ -9,6 +9,8 @@ class Strict(BaseModel):
 
 
 class ColumnCreate(Strict):
+    # Required for operator tokens; customers may omit it (their own is used).
+    customer_id: str | None = None
     title: str = Field(min_length=1, max_length=120)
 
 
@@ -18,6 +20,8 @@ class ColumnUpdate(Strict):
 
 
 class CardCreate(Strict):
+    # Required for operator tokens; customers may omit it. Must match the column's customer.
+    customer_id: str | None = None
     column_id: str
     title: str = Field(min_length=1, max_length=300)
     body: dict[str, Any] = Field(default_factory=dict)
@@ -32,6 +36,7 @@ class CardUpdate(Strict):
 
 class ColumnRead(BaseModel):
     id: str
+    customer_id: str
     title: str
     position: int
     created_at: datetime
@@ -40,6 +45,7 @@ class ColumnRead(BaseModel):
 
 class CardRead(BaseModel):
     id: str
+    customer_id: str
     column_id: str
     title: str
     position: int

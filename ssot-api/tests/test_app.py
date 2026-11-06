@@ -1,19 +1,17 @@
-from httpx import ASGITransport, AsyncClient
+from httpx import AsyncClient
 
 from ssot_api.graph import catalog
-from ssot_api.main import app
+from tests.conftest import operator_headers
 
 
-async def test_health() -> None:
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://t") as c:
-        r = await c.get("/health")
+async def test_health(client: AsyncClient) -> None:
+    r = await client.get("/health")
     assert r.status_code == 200
     assert r.json() == {"status": "ok"}
 
 
-async def test_catalog_endpoint_matches_module() -> None:
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://t") as c:
-        r = await c.get("/api/v1/catalog")
+async def test_catalog_endpoint_matches_module(client: AsyncClient) -> None:
+    r = await client.get("/api/v1/catalog", headers=operator_headers())
     assert r.status_code == 200
     assert r.json()["labels"] == catalog.LABELS
 
@@ -25,7 +23,10 @@ def test_catalog_only_references_known_labels() -> None:
     assert not catalog.is_allowed("Tenant", "HAS_TENANT", "Customer")
 
 
-async def test_create_node_rejects_unknown_label() -> None:
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://t") as c:
-        r = await c.post("/api/v1/nodes", json={"label": "Ticket", "name": "x"})
+async def test_create_node_rejects_unknown_label(client: AsyncClient) -> None:
+    r = await client.post(
+        "/api/v1/nodes",
+        json={"customer_id": "c", "label": "Ticket", "name": "x"},
+        headers=operator_headers(),
+    )
     assert r.status_code == 422
