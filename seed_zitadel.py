@@ -4,12 +4,13 @@
 Creates (or finds):
 - operator organization: `yani-operators`, made by Zitadel's first-instance setup
 - project `yani` in the operator org, roles `operator` and `customer`, role assertion on
-- OIDC app `portal` (PKCE, JWT access tokens with roles) for the operator console
+- OIDC app `portal` (PKCE, JWT access tokens with roles) for the operator console, redirect
+  URIs for the container (8080) and the vite dev server (5174)
 - one test customer organization, granted the project with role `customer` only
 - an operator user (role operator) and a customer user (role customer), fixed dev passwords
 
-Then writes AUTH_AUDIENCE (the project ID) and AUTH_OPERATOR_ORG (the operator organization ID)
-to .env and prints the test credentials.
+Then writes AUTH_AUDIENCE (the project ID), AUTH_OPERATOR_ORG (the operator organization ID) and
+PORTAL_CLIENT_ID to .env and prints the test credentials.
 
 Talks to Zitadel's v1 management/admin REST API with the bootstrap service user's token, which
 first-instance setup writes to .zitadel/bootstrap.pat. Stdlib only.
@@ -37,7 +38,8 @@ ISSUER = f"http://{INSTANCE_HOST}"
 PROJECT = "yani"
 ROLES = {"operator": "Operator", "customer": "Customer"}
 PORTAL_APP = "portal"
-PORTAL_URL = "http://localhost:8080"
+# The container (nginx) and the vite dev server.
+PORTAL_URLS = ("http://localhost:8080", "http://localhost:5174")
 CUSTOMER_ORG = "Contoso (test customer)"
 PASSWORD = os.environ.get("YANI_SEED_PASSWORD", "Yani-dev-pass-1!")
 ADMIN_PASSWORD = os.environ.get("ZITADEL_ADMIN_PASSWORD", "Yani-dev-admin-1!")
@@ -140,32 +142,48 @@ def ensure_project(z: Zitadel) -> str:
     return project_id
 
 
+def portal_oidc_config() -> dict[str, Any]:
+    return {
+        "redirectUris": [f"{url}/auth/callback" for url in PORTAL_URLS],
+        "postLogoutRedirectUris": [f"{url}/" for url in PORTAL_URLS],
+        "responseTypes": ["OIDC_RESPONSE_TYPE_CODE"],
+        "grantTypes": ["OIDC_GRANT_TYPE_AUTHORIZATION_CODE", "OIDC_GRANT_TYPE_REFRESH_TOKEN"],
+        "appType": "OIDC_APP_TYPE_USER_AGENT",
+        "authMethodType": "OIDC_AUTH_METHOD_TYPE_NONE",
+        "accessTokenType": "OIDC_TOKEN_TYPE_JWT",
+        "accessTokenRoleAssertion": True,
+        "idTokenRoleAssertion": True,
+        # http redirect URIs are only allowed in dev mode.
+        "devMode": True,
+    }
+
+
 def ensure_portal_app(z: Zitadel, project_id: str) -> str:
+    """Creates the portal app, or brings the redirect URIs of an existing one up to date."""
+    config = portal_oidc_config()
     found = z.search(
         f"/management/v1/projects/{project_id}/apps/_search",
         [{"nameQuery": {"name": PORTAL_APP, "method": EQUALS}}],
     )
-    if found:
-        return found[0]["oidcConfig"]["clientId"]
-    app = z.call(
-        "POST",
-        f"/management/v1/projects/{project_id}/apps/oidc",
-        {
-            "name": PORTAL_APP,
-            "redirectUris": [f"{PORTAL_URL}/auth/callback"],
-            "postLogoutRedirectUris": [f"{PORTAL_URL}/"],
-            "responseTypes": ["OIDC_RESPONSE_TYPE_CODE"],
-            "grantTypes": ["OIDC_GRANT_TYPE_AUTHORIZATION_CODE", "OIDC_GRANT_TYPE_REFRESH_TOKEN"],
-            "appType": "OIDC_APP_TYPE_USER_AGENT",
-            "authMethodType": "OIDC_AUTH_METHOD_TYPE_NONE",
-            "accessTokenType": "OIDC_TOKEN_TYPE_JWT",
-            "accessTokenRoleAssertion": True,
-            "idTokenRoleAssertion": True,
-            # http redirect URIs are only allowed in dev mode.
-            "devMode": True,
-        },
+    if not found:
+        app = z.call(
+            "POST",
+            f"/management/v1/projects/{project_id}/apps/oidc",
+            {"name": PORTAL_APP, **config},
+        )
+        return app["clientId"]
+    current = found[0]["oidcConfig"]
+    stale = any(
+        sorted(current.get(key, [])) != sorted(config[key])
+        for key in ("redirectUris", "postLogoutRedirectUris")
     )
-    return app["clientId"]
+    if stale:
+        z.call(
+            "PUT",
+            f"/management/v1/projects/{project_id}/apps/{found[0]['id']}/oidc_config",
+            config,
+        )
+    return current["clientId"]
 
 
 def ensure_customer_org(z: Zitadel) -> str:
@@ -268,6 +286,7 @@ def main() -> int:
 
     write_env("AUTH_AUDIENCE", project_id)
     write_env("AUTH_OPERATOR_ORG", operator_org)
+    write_env("PORTAL_CLIENT_ID", client_id)
     print(
         f"""
 Zitadel seeded.
@@ -275,7 +294,7 @@ Zitadel seeded.
   console          {ISSUER}/ui/console
   issuer           {ISSUER}
   project (aud)    {project_id}   -> written to .env as AUTH_AUDIENCE
-  portal client id {client_id}
+  portal client id {client_id}   -> written to .env as PORTAL_CLIENT_ID
   operator org     {operator_org}   -> written to .env as AUTH_OPERATOR_ORG
   customer org     {customer_org}   = customer_id of the test customer
 

@@ -142,6 +142,11 @@ services:
       dockerfile: portal/Dockerfile
     ports:
       - "8080:80"
+    # Served to the browser as /auth-config.json. PORTAL_CLIENT_ID is written by `python dev.py seed`.
+    environment:
+      AUTH_ISSUER: http://zitadel.localhost:8081
+      AUTH_AUDIENCE: ${AUTH_AUDIENCE:-}
+      PORTAL_CLIENT_ID: ${PORTAL_CLIENT_ID:-}
     depends_on:
       - todo-api
 

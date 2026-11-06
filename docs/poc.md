@@ -135,15 +135,22 @@ passed. At the end of each milestone the loop opens or updates the PR and stops 
 
 ## Current
 
-Status: not started
-Branch: -
-PR: -
-Task: -
-Plan: -
+Status: stopped
+Branch: agent/wizardly-fermat-0kyucu (named by the cloud session)
+PR: https://github.com/MarcHoog/Yani/pull/28
+Task: 1.1 (code in, not verified against Zitadel)
+Plan: portal loads issuer, client ID and project ID from /auth-config.json (nginx template,
+vite plugin in dev); oidc-client-ts code + PKCE; AuthGate around the app; bearer middleware on
+the API client, 401 to sign-in; sign-out in the sidebar; seed keeps redirect URIs current for
+8080 and 5174 and writes PORTAL_CLIENT_ID to .env.
 
 ## Blocked
 
-None.
+- 1.1, 1.2, 1.3: the cloud environment cannot pull `ghcr.io/zitadel/zitadel` (network policy
+  denies `pkg-containers.githubusercontent.com`, GHCR's blob host; Docker Hub works). Without a
+  running Zitadel there is no real sign-in to verify. Unblock: allow that host in the
+  environment's network settings, or run the loop locally. 1.1 code is committed; what remains is
+  the stack check listed in the Log.
 
 ## Later
 
@@ -152,3 +159,13 @@ Ideas noticed during the loop that are out of scope. Not worked by the loop.
 ## Log
 
 Newest last. One entry per iteration: date, task, commit, what was verified, what was not.
+
+- 2026-11-06 1.1 (not ticked) - verified: portal typecheck, build and oxlint; ruff on
+  seed_zitadel.py and dev.py; `python dev.py test` (24 + 10 + 18 passed); nginx template served
+  from nginx:1.29-alpine renders /auth-config.json and keeps SPA deep links (200); Chromium
+  against that container is redirected to `<issuer>/oauth/v2/authorize` with response_type code,
+  S256 PKCE, the right client ID, callback and scopes (discovery stubbed in the browser only).
+  Not verified: Zitadel itself (image pull denied), so no real sign-in, token exchange, API call
+  with the token, 401 path, sign-out, or the seed's PUT oidc_config update path. `docker compose
+  build portal` failed in this sandbox because the build container does not trust the session's
+  proxy CA (environment, not the Dockerfile). Stopped: 1.1 to 1.3 all need Zitadel.
