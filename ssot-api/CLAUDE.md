@@ -1,6 +1,6 @@
 # ssot-api
 
-Graph SSOT service. Neo4j nodes = stable ULID + label + name. Relationships only. No detail payloads.
+Inventory service: the synced model of each customer tenant (users, groups, mailboxes, devices, license SKUs and how they relate; see `docs\architecture.md` section 4). Neo4j nodes = stable ULID + label + name. Relationships only. No detail payloads. The catalog is still the earlier MSP starter set; the tenant model replaces it in roadmap slice 2.
 
 ## Stack
 
@@ -36,4 +36,4 @@ tests\                          httpx ASGITransport, no lifespan, no db
 - Node props stay: id, name, created_at, updated_at. Anything else belongs in another store keyed by id.
 - Cypher only in `service.py`. Labels and relation types are interpolated from the catalog, never from raw input.
 - Errors raised only at boundary (router/service via HTTPException subclasses).
-- No auth, by design. Single-user local app. Do not add auth scaffolding or bypass flags.
+- No auth yet. JWT validation via JWKS and `customer_id` scoping are roadmap slice 1 (`docs\architecture.md` section 2). Do not add bypass flags or a "dev without auth" mode.
