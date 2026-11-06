@@ -1,11 +1,14 @@
 # yani
 
-Personal project. Self-hosted automation / todo kanban worker for one user (Marc): graph SSOT (work knowledge as a queryable graph instead of markdown) + todo kanban board + automations + MCP server so Claude Desktop/Code can query and work the board directly.
+Managed layer on top of Microsoft 365 (later Google Workspace) for small and medium businesses. Opinionated, heavily automated, one standard way of doing every common thing (users, shared mailboxes, groups, devices, licenses). Operators run it; customers get a read-only overview of their tenant and cost, and ask for changes through published forms. Every form runs through a standard: plan, approve, apply, log. Drift from the standard is detected and shown.
+
+Read `docs\vision.md` (what and why), `docs\architecture.md` (how), `docs\roadmap.md` (what exists, what's next) before designing anything.
+
 Monorepo. This folder is the git repo and the agentic workspace. Sub-agents get cwd pinned to one component folder.
 
-## Scope override: personal project, not work
+## Scope override: own project, not employer work
 
-This repo is NOT a work project. The user's global `~/.claude/CLAUDE.md` contains work-only rules. Inside this repo:
+This repo is Marc's own project. The user's global `~/.claude/CLAUDE.md` contains employer work rules. Inside this repo:
 
 - IGNORE global Azure DevOps rules. No AzDO, no `azdo-pull-request` skill, no AzDO PR conventions.
 - IGNORE global "Bicep for infrastructure" default. Infra here is Docker Compose.
@@ -18,26 +21,30 @@ Preferred: run `.\claude.ps1` before starting Claude. It toggles `CLAUDE_CONFIG_
 
 ## Hard constraints
 
-- Zero Azure services or integrations in the product stack. No Entra, Azure APIM, App Service, Key Vault, Azure Monitor.
-- Azure is allowed only as a TARGET of automations later (Prefect flows acting on work tenants/systems). Keep behind adapters.
+- No Azure platform services in the product stack: no App Service, Azure APIM, Key Vault, Azure Monitor, Azure SQL. Yani does not run on Azure.
+- Microsoft 365, Entra, Exchange Online and Intune are what yani manages: targets, reached only through adapters in `automation-api`. Microsoft and Google are also the sign-in providers (OIDC). That is integration, not hosting.
 - Everything runs as containers. Dev = `docker compose up`. Prod = same images, any container host.
-- Internet and public registries (Docker Hub, npm, PyPI) are fine. No SaaS dependencies in the product.
+- Internet and public registries (Docker Hub, npm, PyPI) are fine. No SaaS dependencies in the product beyond the tenants it manages and their sign-in.
+- Authentication is required. Every API validates JWTs via the issuer's JWKS. No auth bypass flags, no "dev without auth" mode.
+- Tenant isolation: a customer token only ever reaches its own `customer_id`, enforced server-side in every service.
 
-## Decisions (2026-09-03, repivoted 2026-09-08)
+## Decisions (2026-09-03, repivoted 2026-09-08, back to the managed SMB service 2026-11-06)
 
 | Concern | Decision |
 |---|---|
+| Product | Managed M365 layer for SMBs. Operator runs changes; customer is read-only plus forms. See `docs\vision.md`. |
 | Layout | Monorepo, one folder per component |
 | Backend | Python, FastAPI, uv workspace |
 | Frontend | TypeScript, React, Vite, pnpm workspaces |
-| SSOT store | Neo4j. Nodes = identity + relationships only (stable ID, name, type). No detail payloads. Catalog to be repurposed from MSP entities to Marc's work landscape. |
-| Todo store | Postgres. Cards on a kanban board. Structured fields as columns, text/comments/bodies as JSONB. Columns are data rows, not an enum. No separate document DB. |
-| Entity ownership | Every entity has one home DB. Other DBs store only its ID. Card lives in Postgres, Neo4j gets edge stub after commit. ULIDs everywhere. |
-| UI | One portal: kanban board + graph explorer, same style system. |
-| AI interface | `mcp-server` component: thin MCP adapter (streamable HTTP, localhost) over the REST APIs. Claude Desktop/Code connect via subscription — no API key on this path. No model calls inside yani itself for now. |
-| Gateway | None for now. Plain localhost ports. Reverse proxy returns only if the stack ever serves more than one machine. |
-| Identity | None. Single user, local network only. No auth code, no bypass flags to remove later. |
-| Automations | Mock executor first, Prefect server container later. Keep executor interface stable. Automations may create/move cards. |
+| Inventory | Neo4j via `ssot-api`. Synced tenant model: customers, tenants, users, groups, mailboxes, devices, license SKUs, relationships. Nodes = identity + relationships + minimal query props, `customer_id`, external ID. No payloads. |
+| Requests | Postgres via `todo-api`. A request = customer + standard version + answers + state. Operator works them as cards on a board. Text as JSONB. |
+| Standards and forms | One versioned definition: form JSON schema + plan template + checks. Data, not code; a fixed set of step types in code. Published per customer. |
+| Execution | `automation-api`: connections (encrypted secrets), plans, runs, run events, worker on the runs table, executor seam (mock first), tenant sync, drift checks. |
+| Tenant access | Adapters per capability (users, groups, mailboxes, devices, licenses). M365 first, Google later behind the same interfaces. |
+| Entity ownership | Every entity has one home DB. Other DBs store only its ID. ULIDs everywhere. |
+| Identity | OIDC with Microsoft (Google later). Customer = token tenant ID mapped to `customer_id`. Operator = operator tenant + allow-list. |
+| UI | Operator console (`portal\`) and a customer portal, same `@yani/ui` style system. |
+| AI interface | `mcp-server`, operator only: thin MCP adapter over the REST APIs. No model calls inside yani itself. |
 | API contract | OpenAPI from FastAPI. TS clients generated, never hand-written. |
 | Shared code | Python shared package (settings, logging, db clients). React component library. |
 | Attachments | MinIO (S3 API) when needed. |
@@ -45,13 +52,15 @@ Preferred: run `.\claude.ps1` before starting Claude. It toggles `CLAUDE_CONFIG_
 
 ## Current state
 
-Building up slowly, design first. Architecture lives in `docs\architecture.md` (mermaid). Do not scaffold code folders until the user asks.
+Docs are the source of truth for direction; code still reflects the short-lived personal todo board and is being repurposed slice by slice (`docs\roadmap.md`). Do not scaffold new component folders until the user asks.
 
 Scaffolded so far:
 - `ui\` (`@yani/ui` component library, pnpm workspace root at repo root). See `ui\CLAUDE.md`.
-- `ssot-api\` (FastAPI + Neo4j, uv workspace root at repo root, `compose.yaml` with neo4j + ssot-api, `dev.py`). See `ssot-api\CLAUDE.md`.
-- `todo-api\` (FastAPI + Postgres, kanban columns and cards, port 8010, postgres + todo-api in `compose.yaml`). See `todo-api\CLAUDE.md`.
-- `portal\` (`@yani/portal`, the one UI: kanban board page on todo-api, port 8080 in compose / 5174 dev). See `portal\CLAUDE.md`.
+- `ssot-api\` (FastAPI + Neo4j, the inventory; uv workspace root at repo root). See `ssot-api\CLAUDE.md`.
+- `todo-api\` (FastAPI + Postgres, board columns, cards, inbox; becomes requests). See `todo-api\CLAUDE.md`.
+- `portal\` (`@yani/portal`, becomes the operator console; board page today). See `portal\CLAUDE.md`.
+
+None of them has auth yet. That is slice 1 in the roadmap, not a design choice.
 
 UI style: `docs\style.md` (principles, tokens, scale, for humans). Agent rules distilled in `ui\CLAUDE.md` under Style. Anything visual follows both.
 
@@ -63,4 +72,3 @@ Reference POC (read-only, do not modify): `C:\dev personal\personal-website\.pla
 - Each component folder gets its own `CLAUDE.md` (stack, run, test, boundaries). Sub-agents read that first.
 - Root helper script: `dev.py` (up, down, seed, logs, test), run as `python dev.py <command>`. Agents use it, not raw docker commands.
 - Python: ruff, strict Pydantic, type hints everywhere. TS: strict mode.
-- No auth in the product at all (single user, local). Do not add auth scaffolding, middleware, or bypass flags.

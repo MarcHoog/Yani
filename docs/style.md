@@ -8,7 +8,7 @@ Tonal, rounded, icon-led. Hierarchy through shade and space, not borders or colo
 
 ## Why
 
-Yani is a tool opened every day, for hours: a personal board and knowledge graph for work. Admin consoles tend to shout: uppercase labels, monospace ids, colored active states, borders around everything. That reads as technical and slightly hostile. The reference we chose (a rounded icon-led side panel) reads as calm and friendly instead. The difference is not decoration. It is fewer signals, each one meaning something.
+Yani has two audiences: operators who keep the console open all day, and SMB customers who look in now and then and should never feel lost. Admin consoles tend to shout: uppercase labels, monospace ids, colored active states, borders around everything. That reads as technical and slightly hostile. The reference we chose (a rounded icon-led side panel) reads as calm and friendly instead. The difference is not decoration. It is fewer signals, each one meaning something.
 
 Close cousins: Linear, Notion's sidebar, Apple System Settings. Not Material, not brutalist, not glassmorphism.
 

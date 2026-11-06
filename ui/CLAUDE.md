@@ -1,6 +1,6 @@
 # ui
 
-`@yani/ui`. React component library for the yani portal (kanban board + graph explorer).
+`@yani/ui`. React component library shared by the yani operator console and customer portal. Product context: `docs\vision.md`.
 
 ## Stack
 

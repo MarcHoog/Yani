@@ -1,6 +1,6 @@
 # portal
 
-`@yani/portal`. The one yani UI: kanban board with an inbox now, graph explorer later. Composes `@yani/ui` components; talks to todo-api.
+`@yani/portal`. Becomes the operator console (requests board, inventory, runs, standards; see `docs\roadmap.md`). Today: kanban board with an inbox from the earlier personal-board phase. Composes `@yani/ui` components; talks to todo-api.
 
 ## Stack
 
@@ -46,4 +46,4 @@ src\inbox\InboxItemPanel.tsx inbox item detail in a SidePanel: title, descriptio
 - Domain icons (lucide) are chosen here and passed into ui components as props.
 - Card detail (description, todo, comments) lives in the card `body` JSONB, parsed in `cardBody.ts`. `writeCardDetail` keeps unknown keys because PATCH replaces the whole `body`.
 - The inbox sits left of the board and is not a column. Dragging an item onto a column calls `promote` (new card), onto a card calls `attach` (todo + comment). Both are todo-api endpoints; the portal only reloads afterwards.
-- No auth, by design. Single-user local app.
+- No auth yet. OIDC sign-in is roadmap slice 1 (`docs\architecture.md` section 2). Do not add bypass flags or a "dev without auth" mode.

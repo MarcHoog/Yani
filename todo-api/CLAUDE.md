@@ -1,6 +1,6 @@
 # todo-api
 
-Todo board service. Postgres holds the kanban board: columns and cards as data rows, ULIDs, bodies as JSONB. Columns are rows, not an enum. Next to the board sits the inbox: flat capture items (title + body) that get promoted to a card or attached to one.
+Becomes the requests service (customer requests from forms, worked by operators on the board; see `docs\architecture.md` section 6). Today it is the todo board from the earlier personal-board phase. Postgres holds the kanban board: columns and cards as data rows, ULIDs, bodies as JSONB. Columns are rows, not an enum. Next to the board sits the inbox: flat capture items (title + body) that get promoted to a card or attached to one.
 
 ## Stack
 
@@ -37,4 +37,4 @@ tests\                          httpx ASGITransport, no lifespan, no db
 - Inbox items are not cards. `promote` turns one into a new card in a column (title and body copied), `attach` folds one into an existing card: the title becomes a `body.todos` entry, a non-empty `body.description` becomes a `body.comments` entry. Both delete the item in the same transaction. This is the only place the API knows the card body shape (`todos: [{id, text, done}]`, `comments: [{id, text, at}]`), mirrored in `portal\src\board\cardBody.ts`.
 - Schema is created idempotently in lifespan (`CREATE TABLE IF NOT EXISTS`). No migrations tool yet; a breaking change needs one first.
 - Errors raised only at boundary (router/service via HTTPException subclasses).
-- No auth, by design. Single-user local app. Do not add auth scaffolding or bypass flags.
+- No auth yet. JWT validation via JWKS and `customer_id` scoping are roadmap slice 1 (`docs\architecture.md` section 2). Do not add bypass flags or a "dev without auth" mode.

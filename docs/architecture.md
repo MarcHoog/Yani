@@ -1,160 +1,258 @@
 # yani architecture
 
-Living document. Grows as decisions are made.
-
-Yani is a personal automation and todo kanban worker for one user (Marc). Self-hosted, local,
-single user. Two ideas carry the whole system:
-
-1. **Graph SSOT** (Neo4j): work knowledge — customers, tenants, servers, services, how they
-   relate — lives as a queryable graph instead of markdown notes. AI queries it via MCP.
-2. **Todo kanban** (Postgres): tasks as cards on a board, linked to the graph entities they
-   are about. Automations create and move cards.
-
-No authentication. The app never leaves the local machine / private network. Claude Desktop
-and Claude Code are first-class clients through an MCP server — no Anthropic API key needed
-for that path, model usage rides the existing Claude subscription.
+Living document. Grows as decisions are made. The product itself is described in
+`docs\vision.md`; this document is how it is built.
 
 ## 1. System overview
 
-Every box is a container in one `docker compose` stack.
+Every box is a container in one `docker compose` stack. Same images in dev and prod.
 
 ```mermaid
 flowchart LR
-    marc([Marc])
-    claude([Claude Desktop / Claude Code])
+    op([Operator])
+    cust([Customer contact])
+    claude([Claude Desktop / Code<br/>operator only])
 
     subgraph ui [Frontend - TypeScript / React]
-        portal[Portal<br/>kanban board + graph explorer]
+        console[Operator console<br/>requests board, inventory, runs, standards]
+        cportal[Customer portal<br/>read-only overview, forms, request status]
     end
 
     subgraph ai [AI interface]
-        mcp[mcp-server<br/>MCP tools over the APIs]
+        mcp[mcp-server]
     end
 
     subgraph api [Services - Python / FastAPI]
-        ssotApi[ssot-api]
-        todoApi[todo-api]
-        automationApi[automation-api]
+        inventory[ssot-api<br/>inventory graph]
+        requests[todo-api<br/>requests + operator board]
+        automation[automation-api<br/>standards, plans, runs, sync, drift, connections]
     end
 
     subgraph data [Data]
         neo4j[(Neo4j<br/>identity + relationships)]
-        postgres[(Postgres<br/>cards, runs, JSONB text)]
+        postgres[(Postgres<br/>requests, runs, standards, JSONB text)]
     end
 
-    subgraph later [Later]
-        prefect[Prefect server]
-        azure[Work tenants / systems<br/>automation target only]
+    subgraph targets [Customer tenants - targets only]
+        m365[Microsoft 365<br/>Graph, Exchange Online, Intune]
+        gws[Google Workspace<br/>later]
     end
 
-    marc --> portal
+    idp[Sign-in<br/>Microsoft / Google OIDC]
+
+    op --> console
+    cust --> cportal
     claude --> mcp
-    mcp --> ssotApi
-    mcp --> todoApi
-    mcp --> automationApi
+    console --> idp
+    cportal --> idp
 
-    portal --> ssotApi
-    portal --> todoApi
-    portal --> automationApi
+    console --> inventory
+    console --> requests
+    console --> automation
+    cportal --> inventory
+    cportal --> requests
+    mcp --> inventory
+    mcp --> requests
+    mcp --> automation
 
-    ssotApi --> neo4j
-    todoApi --> postgres
-    automationApi --> postgres
-    todoApi -- edge stubs --> neo4j
-    automationApi -. later .-> prefect
-    prefect -. later .-> azure
+    inventory --> neo4j
+    requests --> postgres
+    automation --> postgres
+    automation -- sync writes --> inventory
+    automation --> m365
+    automation -. later .-> gws
 ```
 
-Dropped from the MSP design: Zitadel (no auth at all), the customer portal, and Traefik as a
-required edge (plain localhost ports in dev; a reverse proxy can return later if the stack
-ever serves more than one machine).
+Component names are the current folder names. `ssot-api` is the inventory, `todo-api` holds
+requests. Renaming is a roadmap item, not a prerequisite.
 
-## 2. AI interface
+## 2. Roles, sign-in and tenant isolation
 
-The MCP server is the only AI-specific component. It is a thin adapter: MCP tools in,
-existing REST APIs out. No model calls inside, no intelligence, no state.
+There is authentication. Two roles, one rule: a customer token can only ever reach its own
+customer's data, enforced in the services, not in the UI.
 
-- Transport: streamable HTTP on a local port (works for both Claude Desktop and Claude Code),
-  registered once per client (`claude mcp add` / Claude Desktop config).
-- Tools mirror the APIs: query/search the graph, inspect an entity and its neighbourhood,
-  list boards and cards, create/move/comment cards, trigger and inspect automation runs.
-- Because Claude is the client, this path needs **no API key** — the subscription pays.
-- Only if yani itself ever calls Claude (e.g. a Prefect flow summarising something with
-  nobody at the keyboard) does it need its own credential. Keep any such call behind an
-  adapter, decision deferred.
+- **Sign-in:** OpenID Connect against Microsoft (and Google later). Customers sign in with their
+  own work account. Operators sign in with an account in the operator's own tenant.
+- **Mapping:** the token's tenant ID (`tid`) maps to exactly one `customer_id`. An operator is
+  recognised by tenant ID plus an allow-list of operator accounts, not by anything in the
+  customer's tenant.
+- **Services:** every API validates the JWT itself via the issuer's JWKS. No shared session
+  store, no auth bypass flags, no "dev mode without auth". Dev uses a real test tenant.
+- **Scoping:** every customer-owned row and node carries `customer_id`. Customer requests are
+  filtered by the `customer_id` from the token server-side; a `customer_id` from the URL or body
+  is never trusted for a customer token.
+- **Customer permissions:** read inventory, read cost and health, list published forms, submit a
+  form, read own requests. Nothing else.
+- **Claude / MCP:** operator only, bound to an operator identity. Never exposed to customers.
 
-## 3. Data ownership
+## 3. Reaching customer tenants
 
-Rule: every entity has exactly one home store. Other stores hold only its ID.
+Yani acts on a customer tenant with its own credentials, never the customer's sign-in.
+
+- Microsoft 365: one multi-tenant app registration, admin-consented per customer with application
+  permissions (Graph for users, groups, licenses, Intune; Exchange Online for mailboxes, because
+  shared mailboxes and mailbox permissions are not fully covered by Graph). GDAP through Partner
+  Center is the alternative if we resell licenses. Open, see section 10.
+- Google Workspace, later: a service account with domain-wide delegation per customer.
+- Each tenant is a **connection**: kind, config, encrypted secret, test endpoint.
+
+All tenant calls go through **adapters** in `automation-api` with one interface per capability
+(users, groups, mailboxes, devices, licenses). Standards speak to the interface, never to Graph
+directly, which is what makes Google a second adapter and not a rewrite.
+
+### Connections and secrets
+
+| kind | config | secret | test |
+|---|---|---|---|
+| `m365` | `{tenant_id, app_id}` | client secret or certificate | token request + `GET /organization`, returns tenant name |
+| `google` (later) | `{customer_id, admin_email}` | service account key | directory read, returns domain |
+
+Rules:
+
+1. Secrets are write-only over the API. Reads return `secret_set` and a four character hint.
+2. `PATCH`: field absent means unchanged, `""` means clear.
+3. Never logged, never in a run event or error. The event writer scrubs known secret values.
+4. Encrypted at rest with Fernet, key from `YANI_SECRET_KEY`.
+
+## 4. Data ownership
+
+Every entity has exactly one home store. Other stores hold only its ID. ULIDs everywhere.
 
 ```mermaid
 flowchart TB
     subgraph neo4j [Neo4j - what exists and how it relates]
         direction LR
         Customer --> Tenant
-        Tenant --> Server
-        Server --> Service
         Tenant --> User
-        Service --> CardStub[Card stub<br/>id only]
+        Tenant --> Group
+        Tenant --> Mailbox
+        Tenant --> Device
+        Tenant --> LicenseSku
+        User -- MEMBER_OF --> Group
+        Group -- HAS_ACCESS --> Mailbox
+        User -- USES --> Device
+        User -- ASSIGNED --> LicenseSku
     end
 
-    subgraph postgres [Postgres - structured state and text]
+    subgraph postgres [Postgres - state and text]
         direction LR
-        Card[Card<br/>columns: status, priority, due, order<br/>JSONB: body, checklist, comments, history]
-        Run[Automation run<br/>columns: state, flow, card_id<br/>JSONB: params, log]
-        Card --> Run
+        Standard[Standard<br/>version, form schema, plan template]
+        Request[Request<br/>customer, standard, state<br/>JSONB: answers, comments]
+        Plan[Plan<br/>JSONB: steps, cost delta]
+        Run[Run<br/>state, timestamps<br/>events]
+        Snapshot[Sync snapshot / drift findings]
+        Standard --> Request --> Plan --> Run
     end
-
-    Card -- after commit, write stub + edge --> CardStub
 ```
 
-Neo4j nodes carry: stable ID (ULID), name, type, minimal props needed for graph queries.
-No bodies, no logs, no payloads. The label/edge catalog in `ssot-api` gets repurposed from
-MSP entities to whatever the work landscape actually contains — that catalog is the single
-place the graph model is defined.
+- **Neo4j** holds the inventory: nodes with stable ID, external ID (the Graph object ID), name,
+  type, `customer_id` and the minimal properties needed for queries and the overview (enabled,
+  compliant, SKU). No payloads, no history. The label and edge catalog in `ssot-api` is the single
+  place the model is defined; the current MSP-era set is the starting point.
+- **Postgres** holds standards, requests, plans, runs, run events, connections, sync snapshots and
+  drift findings. Structured fields as columns, text as JSONB.
+- License prices are not exposed by the tenant APIs. Price per SKU is our own data (list price or
+  agreed price per customer) in Postgres.
 
-Kanban model: one board to start. Columns are data (Postgres rows with an order), not an
-enum, so the board is rearrangeable without migrations. A card's `status` is its column ID.
+## 5. Standards and forms
 
-Next to the board sits the inbox: flat capture items (title, description) in their own Postgres
-table, not a column. An item is either promoted to a new card in a column or attached to an
-existing card, where its title becomes a todo and its description a comment. Both are single
-todo-api calls that delete the item in the same transaction.
+A standard is one versioned definition with two halves:
 
-## 4. Request flow: Claude works the board
+- **Form:** a JSON schema of business inputs (name, department, start date, needs laptop). The
+  customer portal renders forms generically from the schema. No per-form UI code.
+- **Plan template:** turns validated answers plus current inventory into an ordered list of steps
+  against the adapter interface, each with a cost effect.
+
+```
+standard: shared-mailbox v3
+  form:   {display_name, owner_user_id, members[]}
+  plan:   create mailbox (shared, no license, sign-in blocked)
+          create group "MBX-<name>-Access"
+          grant group FullAccess + SendAs on mailbox
+          add members to group
+          set owner
+          enable mailbox auditing
+  checks: mailbox has no license, sign-in blocked, access only via group, owner set
+```
+
+The `checks` are what drift detection evaluates. A standard is published per customer; a customer
+sees only the forms that are published to them. Old requests keep the version they ran with.
+
+Templates stay data plus a small, fixed set of step types implemented in code. No general
+scripting language inside standards.
+
+## 6. Request flow
 
 ```mermaid
 sequenceDiagram
-    actor M as Marc
-    participant CC as Claude (Desktop/Code)
-    participant MCP as mcp-server
-    participant SA as ssot-api
-    participant N as Neo4j
-    participant TA as todo-api
-    participant PG as Postgres
+    actor C as Customer
+    participant CP as Customer portal
+    participant TA as todo-api (requests)
+    participant AA as automation-api
+    participant SA as ssot-api (inventory)
+    actor O as Operator
+    participant M as Microsoft 365
 
-    M->>CC: "what's on my plate for customer X?"
-    CC->>MCP: tool: search_nodes("customer X")
-    MCP->>SA: GET /api/v1/nodes?q=...
-    SA->>N: MATCH
-    CC->>MCP: tool: list_cards(linked_to=customerId)
-    MCP->>TA: GET /cards?node=...
-    TA->>PG: SELECT
-    CC-->>M: answer with cards + graph context
-    M->>CC: "done with the cert renewal, move it"
-    CC->>MCP: tool: move_card(id, column="done")
-    MCP->>TA: PATCH /cards/{id}
-    TA->>PG: UPDATE
+    C->>CP: fill "New employee" form
+    CP->>TA: POST /requests (answers)
+    TA->>AA: validate against standard schema
+    TA-->>CP: request created, state submitted
+    TA->>AA: build plan
+    AA->>SA: read current inventory
+    AA-->>TA: plan with steps and cost delta
+    O->>TA: approve (or auto-approve)
+    TA->>AA: start run
+    AA->>M: apply steps via adapter
+    AA->>SA: write resulting nodes and edges
+    AA-->>TA: run succeeded
+    C->>CP: sees request done, new user in overview
 ```
 
-The portal shows the same board and graph — Claude and the UI are two clients of the same
-APIs, nothing AI-flavoured leaks into the services.
+Request states: `submitted` -> `planned` -> `approved` -> `running` -> `done` | `failed` |
+`rejected` | `cancelled`. On the operator console a request is a card on the board; the board
+columns are the states the operator works in. The customer only ever sees the state, not the
+board.
 
-## Open
+## 7. Sync and drift
 
-- Graph catalog for the work landscape (which labels/edges replace the MSP set).
-- Kanban columns to seed with (working default: backlog, todo, doing, waiting, done).
-- automation-api: separate service or router inside todo-api.
-- mcp-server: own container vs mounted inside one of the FastAPI apps.
-- Whether unattended automations ever call Claude, and with which credential.
-- Attachments store (MinIO) and mail (Mailpit) not drawn yet.
+- A scheduled sync per connection reads users, groups, mailboxes, devices and license assignments
+  and reconciles them into the inventory graph (create, update, remove nodes and edges by external
+  ID).
+- After sync, every published standard's checks run against the inventory. Failures become drift
+  findings with a plain-language text for the customer and a suggested fix plan for the operator.
+- Fixing drift is a normal plan and run. Nothing is auto-fixed in the first version.
+
+## 8. Execution
+
+`automation-api` owns plans, runs and the worker.
+
+- **Runs table is the queue.** One asyncio worker claims with `SELECT ... FOR UPDATE SKIP LOCKED`,
+  concurrency from config. No broker, no Celery. Prefect only if scheduling outgrows this.
+- **Run events** are append-only (`seq`, `at`, `kind`, `payload`), polled with `after=seq`; SSE
+  later is a transport change.
+- **Executor seam:** `Executor.run(run, emit) -> Result`. `MockExecutor` first, so the whole path
+  is real end to end before any tenant is touched. The real executor walks plan steps through the
+  adapters.
+- Steps are idempotent where the target allows it (look up by external ID before creating), so a
+  failed run can be retried.
+
+## 9. AI interface
+
+`mcp-server` is a thin adapter for the operator: MCP tools in, the REST APIs out, using the
+operator's identity. Tools: search inventory, inspect a user or tenant, list and comment requests,
+show a plan, approve, inspect runs and drift. No model calls inside yani itself; Claude Desktop or
+Code is the client and rides the operator's subscription.
+
+## 10. Open
+
+- Tenant access: multi-tenant app consent vs GDAP via Partner Center (depends on whether we resell
+  licenses).
+- Exchange Online from a container: REST-backed PowerShell module vs the EXO admin API, for
+  shared mailboxes and mailbox permissions.
+- Customer portal as its own app vs a role-based view of the operator console. Leaning: own app,
+  because the customer surface is small and must never ship operator code paths.
+- Renaming `ssot-api` / `todo-api` to `inventory-api` / `request-api`.
+- Where standards are authored: in the operator console, or as files in the repo loaded at
+  startup.
+- Reverse proxy in front once there is a public customer portal (TLS, one origin).
+- Attachments (MinIO) and outgoing mail (Mailpit in dev) for request notifications.
