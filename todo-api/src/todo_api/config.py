@@ -1,5 +1,7 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from yani_shared.auth import AuthSettings
+
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
@@ -8,3 +10,4 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+auth_settings = AuthSettings()

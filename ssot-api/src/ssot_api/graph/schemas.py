@@ -14,6 +14,8 @@ class Strict(BaseModel):
 
 
 class NodeCreate(Strict):
+    # Required: only operators create nodes, and they must name the customer.
+    customer_id: str | None = None
     label: Label
     name: str = Field(min_length=1, max_length=200)
 
@@ -24,6 +26,7 @@ class NodeUpdate(Strict):
 
 class NodeRead(BaseModel):
     id: str
+    customer_id: str
     label: str
     name: str
     created_at: datetime

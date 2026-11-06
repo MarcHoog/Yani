@@ -38,7 +38,7 @@ flowchart LR
         gws[Google Workspace<br/>later]
     end
 
-    idp[Sign-in<br/>Microsoft / Google OIDC]
+    idp[Zitadel<br/>yani identity, own container<br/>Microsoft / Google later as IdPs]
 
     op --> console
     cust --> cportal
@@ -71,19 +71,39 @@ requests. Renaming is a roadmap item, not a prerequisite.
 There is authentication. Two roles, one rule: a customer token can only ever reach its own
 customer's data, enforced in the services, not in the UI.
 
-- **Sign-in:** OpenID Connect against Microsoft (and Google later). Customers sign in with their
-  own work account. Operators sign in with an account in the operator's own tenant.
-- **Mapping:** the token's tenant ID (`tid`) maps to exactly one `customer_id`. An operator is
-  recognised by tenant ID plus an allow-list of operator accounts, not by anything in the
-  customer's tenant.
-- **Services:** every API validates the JWT itself via the issuer's JWKS. No shared session
-  store, no auth bypass flags, no "dev mode without auth". Dev uses a real test tenant.
+- **Identity provider:** yani runs its own Zitadel (container in the compose stack, own
+  Postgres). Users are yani users: username + password now, MFA available (OTP, passkeys).
+  Microsoft and Google sign-in come later as identity providers configured inside Zitadel; the
+  services do not change, they only ever see Zitadel tokens.
+- **Organizations:** one Zitadel organization per customer, plus one operator organization.
+  The `yani` project lives in the operator organization and defines two roles, `operator` and
+  `customer`. Each customer organization gets a project grant with the `customer` role only, so
+  nobody in a customer organization can hand out `operator`. Users without a role cannot sign in
+  to yani apps (project role check).
+- **Tokens:** OIDC authorization code + PKCE in the browser apps, JWT access tokens with the
+  project ID as audience. Zitadel asserts the user's role in the project role claim
+  `urn:zitadel:iam:org:project:<project id>:roles` as `{role: {org id: org domain}}`.
+  - role `operator`: an operator, sees all customers. Only accepted when the claim maps it to the
+    operator organization (services know its ID), so a misconfigured grant cannot create one.
+  - role `customer`: a customer user; `customer_id` is the organization ID in the claim, which
+    is the customer's own Zitadel organization. Zitadel sets it; nobody can edit it.
+  - no yani role, both roles, or a customer role from more than one organization: refused (403).
+- **Services:** every API validates the JWT itself via the issuer's JWKS (found through the
+  issuer's OIDC discovery document): RS256 signature, issuer, audience, expiry. No shared
+  session store, no auth bypass flags, no "dev mode without auth". Tests sign tokens with a test
+  key and serve a test JWKS; dev runs the real Zitadel.
 - **Scoping:** every customer-owned row and node carries `customer_id`. Customer requests are
   filtered by the `customer_id` from the token server-side; a `customer_id` from the URL or body
-  is never trusted for a customer token.
+  is never trusted for a customer token. Operators see everything and name `customer_id`
+  explicitly when they create something.
 - **Customer permissions:** read inventory, read cost and health, list published forms, submit a
   form, read own requests. Nothing else.
 - **Claude / MCP:** operator only, bound to an operator identity. Never exposed to customers.
+- **Dev bootstrap:** `python dev.py seed` creates the project, roles, the `portal` OIDC app, one
+  test customer organization with its project grant, an operator user and a customer user, writes
+  the project ID and operator organization ID to `.env` (`AUTH_AUDIENCE`, `AUTH_OPERATOR_ORG`) and
+  prints the credentials. Issuer in dev:
+  `http://zitadel.localhost:8081` (resolves in browsers and, via a network alias, in compose).
 
 ## 3. Reaching customer tenants
 

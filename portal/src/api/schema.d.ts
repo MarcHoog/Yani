@@ -208,6 +208,8 @@ export interface components {
         BoardColumn: {
             /** Id */
             id: string;
+            /** Customer Id */
+            customer_id: string;
             /** Title */
             title: string;
             /** Position */
@@ -227,6 +229,8 @@ export interface components {
         };
         /** CardCreate */
         CardCreate: {
+            /** Customer Id */
+            customer_id?: string | null;
             /** Column Id */
             column_id: string;
             /** Title */
@@ -240,6 +244,8 @@ export interface components {
         CardRead: {
             /** Id */
             id: string;
+            /** Customer Id */
+            customer_id: string;
             /** Column Id */
             column_id: string;
             /** Title */
@@ -276,6 +282,8 @@ export interface components {
         };
         /** ColumnCreate */
         ColumnCreate: {
+            /** Customer Id */
+            customer_id?: string | null;
             /** Title */
             title: string;
         };
@@ -283,6 +291,8 @@ export interface components {
         ColumnRead: {
             /** Id */
             id: string;
+            /** Customer Id */
+            customer_id: string;
             /** Title */
             title: string;
             /** Position */
@@ -317,6 +327,8 @@ export interface components {
         };
         /** InboxItemCreate */
         InboxItemCreate: {
+            /** Customer Id */
+            customer_id?: string | null;
             /** Title */
             title: string;
             /** Body */
@@ -328,6 +340,8 @@ export interface components {
         InboxItemRead: {
             /** Id */
             id: string;
+            /** Customer Id */
+            customer_id: string;
             /** Title */
             title: string;
             /** Position */
@@ -387,7 +401,9 @@ export type $defs = Record<string, never>;
 export interface operations {
     get_board_api_v1_board_get: {
         parameters: {
-            query?: never;
+            query?: {
+                customer_id?: string | null;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -401,6 +417,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Board"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -601,7 +626,9 @@ export interface operations {
     };
     list_items_api_v1_inbox_get: {
         parameters: {
-            query?: never;
+            query?: {
+                customer_id?: string | null;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -615,6 +642,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InboxItemRead"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
