@@ -126,49 +126,68 @@ def caller_from_claims(claims: dict[str, Any], project_id: str, operator_org: st
     return Caller(role="customer", subject=subject, customer_id=orgs[0])
 
 
-def _unavailable(exc: Exception | None = None) -> HTTPException:
-    error = HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "Signing keys unavailable")
-    error.__cause__ = exc
-    return error
+def _unavailable() -> HTTPException:
+    return HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "Signing keys unavailable")
 
 
 class JwksCache:
-    """Signing keys by kid, found via the issuer's OIDC discovery document. Refetches when a kid
-    is unknown, at most once per interval, failed attempts included. Keys it cannot use are
-    skipped."""
+    """Signing keys by kid, found via the issuer's OIDC discovery document.
 
-    def __init__(self, issuer: str, min_refresh_seconds: float = 60) -> None:
+    Refetched when a kid is unknown, or when the key set is older than `max_age_seconds` so keys
+    the issuer removed stop being trusted. At most one attempt per `min_refresh_seconds`, failed
+    attempts included, so a failing issuer is not hit on every request. While the last attempt
+    failed, an unknown kid is 503 (issuer unavailable), not 401; known keys keep working. Keys it
+    cannot use are skipped.
+    """
+
+    def __init__(
+        self, issuer: str, min_refresh_seconds: float = 60, max_age_seconds: float = 3600
+    ) -> None:
         self._discovery_url = issuer.rstrip("/") + "/.well-known/openid-configuration"
         self._jwks_url: str | None = None
         self._min_refresh = min_refresh_seconds
+        self._max_age = max_age_seconds
         self._keys: dict[str, Any] = {}
-        self._fetched_at = -math.inf
+        self._attempted_at = -math.inf
+        self._loaded_at = -math.inf
+        self._failed = False
         self._lock = asyncio.Lock()
 
     async def get(self, kid: str) -> Any | None:
-        if kid not in self._keys:
+        if self._needs_refresh(kid):
             async with self._lock:
                 if (
-                    kid not in self._keys
-                    and time.monotonic() - self._fetched_at >= self._min_refresh
+                    self._needs_refresh(kid)
+                    and time.monotonic() - self._attempted_at >= self._min_refresh
                 ):
                     await self._refresh()
+        if kid not in self._keys and self._failed:
+            raise _unavailable()
         return self._keys.get(kid)
 
+    def _needs_refresh(self, kid: str) -> bool:
+        return kid not in self._keys or time.monotonic() - self._loaded_at >= self._max_age
+
     async def _refresh(self) -> None:
-        # Counted as an attempt up front, so a failing issuer is not hit on every request.
-        self._fetched_at = time.monotonic()
+        self._attempted_at = time.monotonic()
         try:
-            async with httpx.AsyncClient(timeout=10) as client:
-                if self._jwks_url is None:
-                    discovery = await _get_json(client, self._discovery_url)
-                    jwks_uri = discovery.get("jwks_uri")
-                    if not isinstance(jwks_uri, str):
-                        raise _unavailable()
-                    self._jwks_url = jwks_uri
-                jwks = await _get_json(client, self._jwks_url)
-        except (httpx.HTTPError, ValueError) as exc:
-            raise _unavailable(exc) from exc
+            keys = await self._fetch()
+        except (httpx.HTTPError, ValueError):
+            self._failed = True
+            return
+        self._keys = keys
+        self._loaded_at = time.monotonic()
+        self._failed = False
+
+    async def _fetch(self) -> dict[str, Any]:
+        async with httpx.AsyncClient(timeout=10) as client:
+            if self._jwks_url is None:
+                discovery = await _get_json(client, self._discovery_url)
+                jwks_uri = discovery.get("jwks_uri")
+                if not isinstance(jwks_uri, str):
+                    raise ValueError("discovery document has no jwks_uri")
+                self._jwks_url = jwks_uri
+            jwks = await _get_json(client, self._jwks_url)
         keys: dict[str, Any] = {}
         entries = jwks.get("keys")
         for jwk in entries if isinstance(entries, list) else []:
@@ -180,7 +199,7 @@ class JwksCache:
                 keys[jwk["kid"]] = jwt.PyJWK(jwk, algorithm="RS256").key
             except jwt.PyJWTError:
                 continue
-        self._keys = keys
+        return keys
 
 
 async def _get_json(client: httpx.AsyncClient, url: str) -> dict[str, Any]:

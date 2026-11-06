@@ -177,7 +177,7 @@ async def test_non_object_jwks_is_503() -> None:
     assert exc.value.status_code == 503
 
 
-async def test_failed_refresh_is_throttled() -> None:
+async def test_failed_refresh_is_throttled_and_stays_503() -> None:
     calls = []
 
     class Handler(BaseHTTPRequestHandler):
@@ -192,9 +192,21 @@ async def test_failed_refresh_is_throttled() -> None:
     server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
     threading.Thread(target=server.serve_forever, daemon=True).start()
     cache = JwksCache(f"http://127.0.0.1:{server.server_address[1]}")
-    with pytest.raises(HTTPException) as exc:
-        await cache.get("kid-1")
-    assert exc.value.status_code == 503
-    # Within the interval: no new call, the unknown kid is simply unknown.
-    assert await cache.get("kid-2") is None
+    for kid in ("kid-1", "kid-2"):
+        with pytest.raises(HTTPException) as exc:
+            await cache.get(kid)
+        # An issuer outage reads as unavailable, never as a bad token.
+        assert exc.value.status_code == 503
+    # Within the interval only one attempt reached the issuer.
     assert len(calls) == 1
+
+
+async def test_keys_removed_by_the_issuer_stop_being_trusted() -> None:
+    good = json.loads(urllib.request.urlopen(issuer.issuer + "/oauth/v2/keys").read())["keys"][0]
+    routes: dict[str, Any] = {"/k": {"keys": [good]}}
+    base = serve(routes)
+    base = serve({"/.well-known/openid-configuration": {"jwks_uri": base + "/k"}})
+    cache = JwksCache(base, min_refresh_seconds=0, max_age_seconds=0)
+    assert await cache.get(good["kid"]) is not None
+    routes["/k"] = {"keys": []}
+    assert await cache.get(good["kid"]) is None
