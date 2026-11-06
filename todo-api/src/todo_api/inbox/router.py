@@ -1,4 +1,5 @@
-"""Inbox routes. Reads are scoped to the caller's customer. Writes are operator only."""
+"""Inbox routes. Operator only, reads included (see board/router.py). Every query is scoped by
+customer_id."""
 
 from typing import Annotated
 
@@ -23,6 +24,7 @@ router = APIRouter(prefix="/inbox", tags=["inbox"])
 async def list_items(
     conn: ConnDep, caller: CallerDep, customer_id: Annotated[str | None, Query()] = None
 ) -> list[InboxItemRead]:
+    caller.require_operator()
     return [
         InboxItemRead(**item) for item in await service.list_items(conn, caller.scope(customer_id))
     ]

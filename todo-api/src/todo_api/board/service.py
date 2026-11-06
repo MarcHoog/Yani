@@ -16,6 +16,13 @@ _IN_SCOPE = "($2::text IS NULL OR customer_id = $2)"
 
 
 async def get_board(conn: asyncpg.Connection, scope: str | None) -> dict[str, Any]:
+    # One snapshot for both queries, so a concurrent insert cannot add a card whose column
+    # was not read.
+    async with conn.transaction(isolation="repeatable_read", readonly=True):
+        return await _read_board(conn, scope)
+
+
+async def _read_board(conn: asyncpg.Connection, scope: str | None) -> dict[str, Any]:
     columns = await conn.fetch(
         f"""
         SELECT {_COLUMN} FROM board_columns

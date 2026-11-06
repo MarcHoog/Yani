@@ -85,8 +85,13 @@ services:
   # later as identity providers inside Zitadel. Console: http://zitadel.localhost:8081/ui/console
   # First start creates the instance, the operator organization (yani-operators), an admin user
   # and a bootstrap service user whose token is written to .zitadel/ for `python dev.py seed`.
+  # DEV ONLY defaults: masterkey, admin password and the long-lived bootstrap token (IAM owner,
+  # gitignored, in .zitadel/) are fine on a laptop. Anything shared sets ZITADEL_MASTERKEY and
+  # ZITADEL_ADMIN_PASSWORD in .env before the first start and deletes .zitadel/ after seeding.
   zitadel:
     image: ghcr.io/zitadel/zitadel:v4.17.3
+    # Runs as the host user so the token in the bind mount is readable by `dev.py seed`.
+    # `python dev.py up` sets UID; plain `docker compose up` falls back to 1000.
     user: "${UID:-1000}"
     command: start-from-init --masterkeyFromEnv --tlsMode disabled
     ports:

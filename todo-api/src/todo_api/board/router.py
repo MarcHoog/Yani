@@ -1,5 +1,6 @@
-"""Board routes. Reads are scoped to the caller's customer. Writes are operator only: the board
-is the operator's work view, customers only ever see state (docs/architecture.md sections 2, 6)."""
+"""Board routes. Operator only, reads included: the board is the operator's work view, customers
+only ever see request state (docs/architecture.md sections 2, 6). Customer reads arrive with
+requests (roadmap slice 5). Every query is still scoped by customer_id."""
 
 from typing import Annotated
 
@@ -25,6 +26,7 @@ router = APIRouter(tags=["board"])
 async def get_board(
     conn: ConnDep, caller: CallerDep, customer_id: Annotated[str | None, Query()] = None
 ) -> Board:
+    caller.require_operator()
     return Board(**await service.get_board(conn, caller.scope(customer_id)))
 
 

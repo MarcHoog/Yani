@@ -46,6 +46,20 @@ ALTER TABLE board_columns ADD COLUMN IF NOT EXISTS customer_id text NOT NULL;
 ALTER TABLE cards ADD COLUMN IF NOT EXISTS customer_id text NOT NULL;
 ALTER TABLE inbox_items ADD COLUMN IF NOT EXISTS customer_id text NOT NULL;
 
+-- A card belongs to the same customer as its column, enforced by the database too.
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'board_columns_id_customer_key') THEN
+        ALTER TABLE board_columns
+            ADD CONSTRAINT board_columns_id_customer_key UNIQUE (id, customer_id);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'cards_column_customer_fkey') THEN
+        ALTER TABLE cards
+            ADD CONSTRAINT cards_column_customer_fkey FOREIGN KEY (column_id, customer_id)
+            REFERENCES board_columns (id, customer_id) ON DELETE CASCADE;
+    END IF;
+END $$;
+
 CREATE INDEX IF NOT EXISTS board_columns_customer_idx ON board_columns (customer_id, position);
 CREATE INDEX IF NOT EXISTS cards_customer_idx ON cards (customer_id);
 CREATE INDEX IF NOT EXISTS inbox_items_customer_idx ON inbox_items (customer_id, position);

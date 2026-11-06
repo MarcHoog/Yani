@@ -94,13 +94,19 @@ def wait_until_ready(timeout: float = 180) -> str:
             if PAT_FILE.exists() and PAT_FILE.read_text().strip():
                 return PAT_FILE.read_text().strip()
             last = f"{PAT_FILE} not written yet"
+        except PermissionError as exc:
+            raise ZitadelError(
+                f"Cannot read {PAT_FILE} ({exc}). Zitadel wrote it as another user: start the "
+                "stack with `python dev.py up` (it runs Zitadel as you), or fix the file owner."
+            ) from exc
         except (urllib.error.URLError, OSError) as exc:
             last = str(exc)
         time.sleep(2)
     raise ZitadelError(
         f"Zitadel not ready at {BASE_URL} after {timeout:.0f}s ({last}). "
-        "Is `python dev.py up` running? The token is only written on the very first start; "
-        "if .zitadel/ was cleared, reset with `python dev.py down -v`."
+        "Is `python dev.py up` running (plain `docker compose up` may leave .zitadel/ unwritable "
+        "for Zitadel)? The token is only written on the very first start; if .zitadel/ was "
+        "cleared, reset with `python dev.py down -v`."
     )
 
 

@@ -2,9 +2,11 @@
 
 from typing import Any
 
+import asyncpg
+import pytest
 from httpx import AsyncClient
 
-from tests.conftest import issuer
+from tests.conftest import app, issuer
 
 OP = issuer.operator_headers()
 
@@ -57,7 +59,7 @@ async def test_operator_must_pass_customer_id_when_creating(
 
 async def test_board_isolation(client: AsyncClient, customers: tuple[str, str]) -> None:
     a, b = customers
-    ha, hb = issuer.customer_headers(a), issuer.customer_headers(b)
+    ha = issuer.customer_headers(a)
     col_a = await _post(client, "/api/v1/columns", {"customer_id": a, "title": "A"})
     col_b = await _post(client, "/api/v1/columns", {"customer_id": b, "title": "B"})
     card_a = await _post(
@@ -68,16 +70,11 @@ async def test_board_isolation(client: AsyncClient, customers: tuple[str, str]) 
     )
     assert card_a["customer_id"] == a
 
-    # Reads: each customer sees only their own board.
-    board_a = (await client.get("/api/v1/board", headers=ha)).json()
-    assert [c["id"] for c in board_a["columns"]] == [col_a["id"]]
-    assert [c["id"] for c in board_a["columns"][0]["cards"]] == [card_a["id"]]
-    r = await client.get(f"/api/v1/board?customer_id={b}", headers=ha)
-    assert r.status_code == 403
-
-    # Customers never write: not B's rows, not their own.
+    # Customers neither read nor write the operator board: not B's rows, not their own.
     for col, card in ((col_b, card_b), (col_a, card_a)):
         for method, path, body in [
+            ("GET", "/api/v1/board", None),
+            ("GET", f"/api/v1/board?customer_id={col['customer_id']}", None),
             ("POST", "/api/v1/columns", {"customer_id": b, "title": "x"}),
             ("PATCH", f"/api/v1/columns/{col['id']}", {"title": "x"}),
             ("DELETE", f"/api/v1/columns/{col['id']}", None),
@@ -98,20 +95,22 @@ async def test_board_isolation(client: AsyncClient, customers: tuple[str, str]) 
     )
     assert r.status_code == 404
 
-    board_b = (await client.get("/api/v1/board", headers=hb)).json()
-    assert [c["title"] for c in board_b["columns"]] == ["B"]
-    assert [c["title"] for c in board_b["columns"][0]["cards"]] == ["b1"]
+    # Scoped reads: filtered to one customer, the operator sees exactly that customer's rows.
+    r = await client.get(f"/api/v1/board?customer_id={a}", headers=OP)
+    assert [c["id"] for c in r.json()["columns"]] == [col_a["id"]]
+    assert [c["id"] for c in r.json()["columns"][0]["cards"]] == [card_a["id"]]
+    r = await client.get(f"/api/v1/board?customer_id={b}", headers=OP)
+    assert [c["title"] for c in r.json()["columns"]] == ["B"]
+    assert [c["title"] for c in r.json()["columns"][0]["cards"]] == ["b1"]
 
-    # Operator sees both, and can filter.
+    # Unfiltered, the operator sees both.
     all_ids = {c["id"] for c in (await client.get("/api/v1/board", headers=OP)).json()["columns"]}
     assert {col_a["id"], col_b["id"]} <= all_ids
-    r = await client.get(f"/api/v1/board?customer_id={b}", headers=OP)
-    assert [c["id"] for c in r.json()["columns"]] == [col_b["id"]]
 
 
 async def test_inbox_isolation(client: AsyncClient, customers: tuple[str, str]) -> None:
     a, b = customers
-    ha, hb = issuer.customer_headers(a), issuer.customer_headers(b)
+    ha = issuer.customer_headers(a)
     col_b = await _post(client, "/api/v1/columns", {"customer_id": b, "title": "B"})
     card_b = await _post(
         client, "/api/v1/cards", {"customer_id": b, "column_id": col_b["id"], "title": "b"}
@@ -120,14 +119,11 @@ async def test_inbox_isolation(client: AsyncClient, customers: tuple[str, str]) 
     item_b = await _post(client, "/api/v1/inbox", {"customer_id": b, "title": "b"})
     assert item_a["customer_id"] == a
 
-    assert [i["id"] for i in (await client.get("/api/v1/inbox", headers=ha)).json()] == [
-        item_a["id"]
-    ]
-    assert (await client.get(f"/api/v1/inbox?customer_id={b}", headers=ha)).status_code == 403
-
-    # A cannot touch B's item (or its own: customers do not write).
+    # A cannot touch B's item, nor its own: the inbox is operator only, reads included.
     for item in (item_b, item_a):
         for method, path, body in [
+            ("GET", "/api/v1/inbox", None),
+            ("GET", f"/api/v1/inbox?customer_id={item['customer_id']}", None),
             ("POST", "/api/v1/inbox", {"title": "x"}),
             ("PATCH", f"/api/v1/inbox/{item['id']}", {"title": "x"}),
             ("DELETE", f"/api/v1/inbox/{item['id']}", None),
@@ -146,12 +142,10 @@ async def test_inbox_isolation(client: AsyncClient, customers: tuple[str, str]) 
         f"/api/v1/inbox/{item_a['id']}/attach", json={"card_id": card_b["id"]}, headers=OP
     )
     assert r.status_code == 404
-    assert [i["id"] for i in (await client.get("/api/v1/inbox", headers=ha)).json()] == [
-        item_a["id"]
-    ]
-    assert [i["id"] for i in (await client.get("/api/v1/inbox", headers=hb)).json()] == [
-        item_b["id"]
-    ]
+    r = await client.get(f"/api/v1/inbox?customer_id={a}", headers=OP)
+    assert [i["id"] for i in r.json()] == [item_a["id"]]
+    r = await client.get(f"/api/v1/inbox?customer_id={b}", headers=OP)
+    assert [i["id"] for i in r.json()] == [item_b["id"]]
 
     # Operator sees both and can promote within a customer.
     all_ids = {i["id"] for i in (await client.get("/api/v1/inbox", headers=OP)).json()}
@@ -161,3 +155,19 @@ async def test_inbox_isolation(client: AsyncClient, customers: tuple[str, str]) 
     )
     assert r.status_code == 201
     assert r.json()["customer_id"] == b
+
+
+async def test_database_rejects_card_in_another_customers_column(
+    client: AsyncClient, customers: tuple[str, str]
+) -> None:
+    a, b = customers
+    col_b = await _post(client, "/api/v1/columns", {"customer_id": b, "title": "B"})
+    async with app.state.pool.acquire() as conn:
+        with pytest.raises(asyncpg.ForeignKeyViolationError):
+            await conn.execute(
+                "INSERT INTO cards (id, customer_id, column_id, title, position) "
+                "VALUES ($1, $2, $3, 'x', 0)",
+                f"card-{a}",
+                a,
+                col_b["id"],
+            )
