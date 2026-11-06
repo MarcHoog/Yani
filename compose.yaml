@@ -1,11 +1,12 @@
 # Auth for every API (docs/architecture.md section 2). Issuer is yani's own Zitadel below.
 # `zitadel.localhost` resolves to the Zitadel container inside compose (network alias) and to
 # 127.0.0.1 in browsers (*.localhost), so services and browsers see the same issuer.
-# AUTH_AUDIENCE is the Zitadel project ID; `python dev.py seed` writes it to .env. The APIs refuse
-# to start without it.
+# AUTH_AUDIENCE (Zitadel project ID) and AUTH_OPERATOR_ORG (operator organization ID) are written
+# to .env by `python dev.py seed`. The APIs refuse to start without them.
 x-auth-env: &auth-env
   AUTH_ISSUER: http://zitadel.localhost:8081
   AUTH_AUDIENCE: ${AUTH_AUDIENCE:-}
+  AUTH_OPERATOR_ORG: ${AUTH_OPERATOR_ORG:-}
 
 services:
   neo4j:

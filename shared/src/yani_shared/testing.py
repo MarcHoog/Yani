@@ -50,7 +50,11 @@ class FakeIssuer:
         threading.Thread(target=self._server.serve_forever, daemon=True).start()
 
     def env(self) -> dict[str, str]:
-        return {"AUTH_ISSUER": self.issuer, "AUTH_AUDIENCE": PROJECT_ID}
+        return {
+            "AUTH_ISSUER": self.issuer,
+            "AUTH_AUDIENCE": PROJECT_ID,
+            "AUTH_OPERATOR_ORG": OPERATOR_ORG_ID,
+        }
 
     def token(
         self,

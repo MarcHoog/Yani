@@ -12,7 +12,11 @@ from yani_shared.auth import Auth, AuthSettings, Caller, JwksCache, caller_from_
 from yani_shared.testing import OPERATOR_ORG_ID, PROJECT_ID, FakeIssuer
 
 issuer = FakeIssuer()
-auth = Auth(AuthSettings.model_validate({"issuer": issuer.issuer, "audience": PROJECT_ID}))
+auth = Auth(
+    AuthSettings.model_validate(
+        {"issuer": issuer.issuer, "audience": PROJECT_ID, "operator_org": OPERATOR_ORG_ID}
+    )
+)
 app = FastAPI()
 
 
@@ -95,18 +99,22 @@ def claims(roles: Any) -> dict[str, Any]:
         {"customer": {}},
         {"customer": "org-a"},
         ["customer"],
+        # operator only from the operator org, customer never from it
+        {"operator": {"org-a": "a"}},
+        {"operator": {OPERATOR_ORG_ID: "op", "org-a": "a"}},
+        {"customer": {OPERATOR_ORG_ID: "op"}},
     ],
 )
 def test_unclear_roles_are_refused(roles: Any) -> None:
     with pytest.raises(HTTPException) as exc:
-        caller_from_claims(claims(roles), PROJECT_ID)
+        caller_from_claims(claims(roles), PROJECT_ID, OPERATOR_ORG_ID)
     assert exc.value.status_code == 403
 
 
 def test_roles_of_another_project_are_ignored() -> None:
     other = {"sub": "u", roles_claim("other-project"): {"operator": {OPERATOR_ORG_ID: "op"}}}
     with pytest.raises(HTTPException):
-        caller_from_claims(other, PROJECT_ID)
+        caller_from_claims(other, PROJECT_ID, OPERATOR_ORG_ID)
 
 
 def test_customer_scope_is_always_own() -> None:
@@ -167,3 +175,26 @@ async def test_non_object_jwks_is_503() -> None:
     with pytest.raises(HTTPException) as exc:
         await JwksCache(base).get("any")
     assert exc.value.status_code == 503
+
+
+async def test_failed_refresh_is_throttled() -> None:
+    calls = []
+
+    class Handler(BaseHTTPRequestHandler):
+        def do_GET(self) -> None:  # noqa: N802
+            calls.append(self.path)
+            self.send_response(500)
+            self.end_headers()
+
+        def log_message(self, format: str, *args: Any) -> None:  # noqa: A002
+            pass
+
+    server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    cache = JwksCache(f"http://127.0.0.1:{server.server_address[1]}")
+    with pytest.raises(HTTPException) as exc:
+        await cache.get("kid-1")
+    assert exc.value.status_code == 503
+    # Within the interval: no new call, the unknown kid is simply unknown.
+    assert await cache.get("kid-2") is None
+    assert len(calls) == 1

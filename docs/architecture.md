@@ -83,7 +83,8 @@ customer's data, enforced in the services, not in the UI.
 - **Tokens:** OIDC authorization code + PKCE in the browser apps, JWT access tokens with the
   project ID as audience. Zitadel asserts the user's role in the project role claim
   `urn:zitadel:iam:org:project:<project id>:roles` as `{role: {org id: org domain}}`.
-  - role `operator`: an operator, sees all customers.
+  - role `operator`: an operator, sees all customers. Only accepted when the claim maps it to the
+    operator organization (services know its ID), so a misconfigured grant cannot create one.
   - role `customer`: a customer user; `customer_id` is the organization ID in the claim, which
     is the customer's own Zitadel organization. Zitadel sets it; nobody can edit it.
   - no yani role, both roles, or a customer role from more than one organization: refused (403).
@@ -100,7 +101,8 @@ customer's data, enforced in the services, not in the UI.
 - **Claude / MCP:** operator only, bound to an operator identity. Never exposed to customers.
 - **Dev bootstrap:** `python dev.py seed` creates the project, roles, the `portal` OIDC app, one
   test customer organization with its project grant, an operator user and a customer user, writes
-  the project ID to `.env` as `AUTH_AUDIENCE` and prints the credentials. Issuer in dev:
+  the project ID and operator organization ID to `.env` (`AUTH_AUDIENCE`, `AUTH_OPERATOR_ORG`) and
+  prints the credentials. Issuer in dev:
   `http://zitadel.localhost:8081` (resolves in browsers and, via a network alias, in compose).
 
 ## 3. Reaching customer tenants

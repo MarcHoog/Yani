@@ -5,8 +5,9 @@ The issuer is yani's Zitadel. Tokens are Zitadel JWT access tokens for the `yani
 
     "urn:zitadel:iam:org:project:<project id>:roles": {"customer": {"<org id>": "<org domain>"}}
 
-- `operator` role: an operator. The project is owned by the operator organization and only that
-  organization can grant `operator`.
+- `operator` role: an operator, only when the claim maps it to the operator organization
+  (AUTH_OPERATOR_ORG). Zitadel setup already keeps `operator` out of customer project grants;
+  this check holds even if a grant is ever misconfigured.
 - `customer` role: a customer user. customer_id is the organization ID in the claim, which is the
   customer's own Zitadel organization (customer orgs only get `customer` via a project grant).
 
@@ -45,6 +46,8 @@ class AuthSettings(BaseSettings):
     issuer: str = Field(min_length=1)
     # ID of the `yani` project in Zitadel. Written to .env by `python dev.py seed`.
     audience: str = Field(min_length=1)
+    # ID of the operator organization in Zitadel. Written to .env by `python dev.py seed`.
+    operator_org: str = Field(min_length=1)
 
 
 class Unauthorized(HTTPException):
@@ -102,7 +105,7 @@ class Caller(BaseModel):
         return str(self.customer_id)
 
 
-def caller_from_claims(claims: dict[str, Any], project_id: str) -> Caller:
+def caller_from_claims(claims: dict[str, Any], project_id: str, operator_org: str) -> Caller:
     """Maps validated claims to a Caller. Anything unclear is refused (403), never guessed."""
     granted = claims.get(roles_claim(project_id))
     if not isinstance(granted, dict):
@@ -112,8 +115,12 @@ def caller_from_claims(claims: dict[str, Any], project_id: str) -> Caller:
         raise Forbidden("No yani role" if not roles else "Ambiguous yani role")
     subject = str(claims["sub"])
     if roles[0] == "operator":
+        if list(granted["operator"]) != [operator_org]:
+            raise Forbidden("Operator role must come from the operator organization")
         return Caller(role="operator", subject=subject, customer_id=None)
     orgs = list(granted["customer"])
+    if operator_org in orgs:
+        raise Forbidden("Customer role cannot come from the operator organization")
     if len(orgs) != 1 or not isinstance(orgs[0], str) or not orgs[0]:
         raise Forbidden("Customer role must come from exactly one organization")
     return Caller(role="customer", subject=subject, customer_id=orgs[0])
@@ -127,7 +134,8 @@ def _unavailable(exc: Exception | None = None) -> HTTPException:
 
 class JwksCache:
     """Signing keys by kid, found via the issuer's OIDC discovery document. Refetches when a kid
-    is unknown, at most once per interval. Keys it cannot use are skipped."""
+    is unknown, at most once per interval, failed attempts included. Keys it cannot use are
+    skipped."""
 
     def __init__(self, issuer: str, min_refresh_seconds: float = 60) -> None:
         self._discovery_url = issuer.rstrip("/") + "/.well-known/openid-configuration"
@@ -148,6 +156,8 @@ class JwksCache:
         return self._keys.get(kid)
 
     async def _refresh(self) -> None:
+        # Counted as an attempt up front, so a failing issuer is not hit on every request.
+        self._fetched_at = time.monotonic()
         try:
             async with httpx.AsyncClient(timeout=10) as client:
                 if self._jwks_url is None:
@@ -171,7 +181,6 @@ class JwksCache:
             except jwt.PyJWTError:
                 continue
         self._keys = keys
-        self._fetched_at = time.monotonic()
 
 
 async def _get_json(client: httpx.AsyncClient, url: str) -> dict[str, Any]:
@@ -199,7 +208,7 @@ class Auth:
         if credentials is None:
             raise Unauthorized("Missing bearer token")
         claims = await self.validate(credentials.credentials)
-        return caller_from_claims(claims, self._settings.audience)
+        return caller_from_claims(claims, self._settings.audience, self._settings.operator_org)
 
     async def validate(self, token: str) -> dict[str, Any]:
         try:

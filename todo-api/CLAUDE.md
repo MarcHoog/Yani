@@ -9,7 +9,7 @@ Python 3.13, FastAPI, asyncpg, strict Pydantic, `yani-shared` (auth), uv (worksp
 ## Run
 
 From repo root: `python dev.py up` starts postgres + todo-api via compose. Docs: http://localhost:8010/docs
-Local without compose: `uv sync` at root, then from `todo-api\`: `uv run uvicorn todo_api.main:app --reload --port 8010`. Needs postgres on localhost:5432 and the `AUTH_*` env (Zitadel issuer + project ID from `python dev.py seed`), see `.env.example`.
+Local without compose: `uv sync` at root, then from `todo-api\`: `uv run uvicorn todo_api.main:app --reload --port 8010`. Needs postgres on localhost:5432 and the `AUTH_*` env (Zitadel issuer, project ID and operator org ID from `python dev.py seed`), see `.env.example`.
 
 | command (from `todo-api\`) | does |
 |---|---|
@@ -21,7 +21,7 @@ Local without compose: `uv sync` at root, then from `todo-api\`: `uv run uvicorn
 
 ```
 src\todo_api\main.py            app, lifespan (create pool, schema), /health, /ready
-src\todo_api\config.py          Settings (DATABASE_URL), auth_settings (AUTH_ISSUER, AUTH_AUDIENCE)
+src\todo_api\config.py          Settings (DATABASE_URL), auth_settings (AUTH_ISSUER, AUTH_AUDIENCE, AUTH_OPERATOR_ORG)
 src\todo_api\auth.py            auth dependency, CallerDep
 src\todo_api\database.py        SCHEMA ddl, pool, ConnDep (jsonb codec on every connection)
 src\todo_api\exceptions.py      NotFound

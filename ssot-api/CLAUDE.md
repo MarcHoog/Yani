@@ -9,7 +9,7 @@ Python 3.13, FastAPI, neo4j async driver, strict Pydantic, `yani-shared` (auth),
 ## Run
 
 From repo root: `python dev.py up` starts neo4j + ssot-api via compose. Docs: http://localhost:8000/docs
-Local without compose: `uv sync` at root, then from `ssot-api\`: `uv run uvicorn ssot_api.main:app --reload`. Needs neo4j on bolt://localhost:7687 and the `AUTH_*` env (Zitadel issuer + project ID from `python dev.py seed`), see `.env.example`.
+Local without compose: `uv sync` at root, then from `ssot-api\`: `uv run uvicorn ssot_api.main:app --reload`. Needs neo4j on bolt://localhost:7687 and the `AUTH_*` env (Zitadel issuer, project ID and operator org ID from `python dev.py seed`), see `.env.example`.
 
 | command (from `ssot-api\`) | does |
 |---|---|
@@ -21,7 +21,7 @@ Local without compose: `uv sync` at root, then from `ssot-api\`: `uv run uvicorn
 
 ```
 src\ssot_api\main.py            app, lifespan (refuses nodes without customer_id; unique id constraint + customer_id index per label), /health, /ready
-src\ssot_api\config.py          Settings (NEO4J_*), auth_settings (AUTH_ISSUER, AUTH_AUDIENCE)
+src\ssot_api\config.py          Settings (NEO4J_*), auth_settings (AUTH_ISSUER, AUTH_AUDIENCE, AUTH_OPERATOR_ORG)
 src\ssot_api\auth.py            auth dependency, CallerDep
 src\ssot_api\database.py        driver, SessionDep, run()
 src\ssot_api\exceptions.py      NotFound, InvalidRelation

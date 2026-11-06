@@ -70,7 +70,7 @@ def main() -> int:
                 return code
         return 0
     # seed: bootstrap Zitadel (orgs, project, app, test users), then restart the APIs so they
-    # pick up AUTH_AUDIENCE from .env.
+    # pick up AUTH_AUDIENCE and AUTH_OPERATOR_ORG from .env.
     code = run([sys.executable, str(ROOT / "seed_zitadel.py"), *rest])
     if code != 0:
         return code

@@ -8,7 +8,8 @@ Creates (or finds):
 - one test customer organization, granted the project with role `customer` only
 - an operator user (role operator) and a customer user (role customer), fixed dev passwords
 
-Then writes AUTH_AUDIENCE (the project ID) to .env and prints the test credentials.
+Then writes AUTH_AUDIENCE (the project ID) and AUTH_OPERATOR_ORG (the operator organization ID)
+to .env and prints the test credentials.
 
 Talks to Zitadel's v1 management/admin REST API with the bootstrap service user's token, which
 first-instance setup writes to .zitadel/bootstrap.pat. Stdlib only.
@@ -260,6 +261,7 @@ def main() -> int:
         return 1
 
     write_env("AUTH_AUDIENCE", project_id)
+    write_env("AUTH_OPERATOR_ORG", operator_org)
     print(
         f"""
 Zitadel seeded.
@@ -268,7 +270,7 @@ Zitadel seeded.
   issuer           {ISSUER}
   project (aud)    {project_id}   -> written to .env as AUTH_AUDIENCE
   portal client id {client_id}
-  operator org     {operator_org}
+  operator org     {operator_org}   -> written to .env as AUTH_OPERATOR_ORG
   customer org     {customer_org}   = customer_id of the test customer
 
   admin            admin@yani-operators.zitadel.localhost / {ADMIN_PASSWORD}  (Zitadel admin)
