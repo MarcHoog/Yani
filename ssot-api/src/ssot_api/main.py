@@ -12,6 +12,15 @@ from ssot_api.graph.router import router as graph_router
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     async with driver.session() as session:
+        # Nodes from before customer scoping cannot be served; refuse to start instead of
+        # failing per request. Reset the dev volume: python dev.py down -v
+        result = await session.run("MATCH (n) WHERE n.customer_id IS NULL RETURN count(n) AS c")
+        record = await result.single()
+        if record and record["c"]:
+            raise RuntimeError(
+                f"{record['c']} Neo4j nodes have no customer_id. "
+                "Reset dev data: python dev.py down -v"
+            )
         for label in LABELS:
             await session.run(
                 f"CREATE CONSTRAINT {label.lower()}_id IF NOT EXISTS "

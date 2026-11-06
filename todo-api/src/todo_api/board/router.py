@@ -1,3 +1,6 @@
+"""Board routes. Reads are scoped to the caller's customer. Writes are operator only: the board
+is the operator's work view, customers only ever see state (docs/architecture.md sections 2, 6)."""
+
 from typing import Annotated
 
 from fastapi import APIRouter, Query, status
@@ -27,6 +30,7 @@ async def get_board(
 
 @router.post("/columns", status_code=status.HTTP_201_CREATED)
 async def create_column(conn: ConnDep, caller: CallerDep, payload: ColumnCreate) -> ColumnRead:
+    caller.require_operator()
     customer_id = caller.owner(payload.customer_id)
     return ColumnRead(**await service.create_column(conn, customer_id, payload.title))
 
@@ -35,6 +39,7 @@ async def create_column(conn: ConnDep, caller: CallerDep, payload: ColumnCreate)
 async def update_column(
     conn: ConnDep, caller: CallerDep, column_id: str, payload: ColumnUpdate
 ) -> ColumnRead:
+    caller.require_operator()
     return ColumnRead(
         **await service.update_column(
             conn, caller.scope(), column_id, payload.title, payload.position
@@ -44,11 +49,13 @@ async def update_column(
 
 @router.delete("/columns/{column_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_column(conn: ConnDep, caller: CallerDep, column_id: str) -> None:
+    caller.require_operator()
     await service.delete_column(conn, caller.scope(), column_id)
 
 
 @router.post("/cards", status_code=status.HTTP_201_CREATED)
 async def create_card(conn: ConnDep, caller: CallerDep, payload: CardCreate) -> CardRead:
+    caller.require_operator()
     customer_id = caller.owner(payload.customer_id)
     return CardRead(
         **await service.create_card(
@@ -61,6 +68,7 @@ async def create_card(conn: ConnDep, caller: CallerDep, payload: CardCreate) -> 
 async def update_card(
     conn: ConnDep, caller: CallerDep, card_id: str, payload: CardUpdate
 ) -> CardRead:
+    caller.require_operator()
     return CardRead(
         **await service.update_card(
             conn,
@@ -76,4 +84,5 @@ async def update_card(
 
 @router.delete("/cards/{card_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_card(conn: ConnDep, caller: CallerDep, card_id: str) -> None:
+    caller.require_operator()
     await service.delete_card(conn, caller.scope(), card_id)

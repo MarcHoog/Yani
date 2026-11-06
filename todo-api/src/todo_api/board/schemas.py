@@ -9,7 +9,7 @@ class Strict(BaseModel):
 
 
 class ColumnCreate(Strict):
-    # Required for operator tokens; customers may omit it (their own is used).
+    # Required: only operators create, and they name the customer.
     customer_id: str | None = None
     title: str = Field(min_length=1, max_length=120)
 
@@ -20,7 +20,7 @@ class ColumnUpdate(Strict):
 
 
 class CardCreate(Strict):
-    # Required for operator tokens; customers may omit it. Must match the column's customer.
+    # Required: only operators create, and they name the customer. Must match the column's.
     customer_id: str | None = None
     column_id: str
     title: str = Field(min_length=1, max_length=300)

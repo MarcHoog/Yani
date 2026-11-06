@@ -10,12 +10,6 @@ from todo_api.config import settings
 # customer_id is added with ALTER as well so an old dev volume fails loudly at startup when it
 # holds rows without one (reset it with `python dev.py down -v`), instead of failing per query.
 SCHEMA = """
-CREATE TABLE IF NOT EXISTS customer_tenants (
-    tenant_id text PRIMARY KEY,
-    customer_id text NOT NULL,
-    created_at timestamptz NOT NULL DEFAULT now()
-);
-
 CREATE TABLE IF NOT EXISTS board_columns (
     id text PRIMARY KEY,
     customer_id text NOT NULL,

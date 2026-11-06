@@ -22,13 +22,14 @@ Preferred: run `.\claude.ps1` before starting Claude. It toggles `CLAUDE_CONFIG_
 ## Hard constraints
 
 - No Azure platform services in the product stack: no App Service, Azure APIM, Key Vault, Azure Monitor, Azure SQL. Yani does not run on Azure.
-- Microsoft 365, Entra, Exchange Online and Intune are what yani manages: targets, reached only through adapters in `automation-api`. Microsoft and Google are also the sign-in providers (OIDC). That is integration, not hosting.
+- Microsoft 365, Entra, Exchange Online and Intune are what yani manages: targets, reached only through adapters in `automation-api`. That is integration, not hosting.
+- Identity is yani's own: a self-hosted Zitadel container in the compose stack. Users sign in to Zitadel, never directly to Microsoft or Google; those become identity providers inside Zitadel later, with no code change in the services.
 - Everything runs as containers. Dev = `docker compose up`. Prod = same images, any container host.
-- Internet and public registries (Docker Hub, npm, PyPI) are fine. No SaaS dependencies in the product beyond the tenants it manages and their sign-in.
-- Authentication is required. Every API validates JWTs via the issuer's JWKS. No auth bypass flags, no "dev without auth" mode.
+- Internet and public registries (Docker Hub, GHCR, npm, PyPI) are fine. No SaaS dependencies in the product beyond the tenants it manages (and, later, Microsoft/Google as upstream sign-in behind Zitadel).
+- Authentication is required. Every API validates Zitadel JWTs via the issuer's JWKS. No auth bypass flags, no "dev without auth" mode.
 - Tenant isolation: a customer token only ever reaches its own `customer_id`, enforced server-side in every service.
 
-## Decisions (2026-09-03, repivoted 2026-09-08, back to the managed SMB service 2026-11-06)
+## Decisions (2026-09-03, repivoted 2026-09-08, back to the managed SMB service 2026-11-06, identity to Zitadel 2026-11-06)
 
 | Concern | Decision |
 |---|---|
@@ -42,7 +43,7 @@ Preferred: run `.\claude.ps1` before starting Claude. It toggles `CLAUDE_CONFIG_
 | Execution | `automation-api`: connections (encrypted secrets), plans, runs, run events, worker on the runs table, executor seam (mock first), tenant sync, drift checks. |
 | Tenant access | Adapters per capability (users, groups, mailboxes, devices, licenses). M365 first, Google later behind the same interfaces. |
 | Entity ownership | Every entity has one home DB. Other DBs store only its ID. ULIDs everywhere. |
-| Identity | OIDC with Microsoft (Google later). Customer = token tenant ID mapped to `customer_id`. Operator = operator tenant + allow-list. |
+| Identity | Self-hosted Zitadel (compose, own Postgres). Local users (username + password, MFA available) now; Microsoft/Google sign-in later as identity providers inside Zitadel. One Zitadel organization per customer plus one operator organization. Project `yani` (owned by the operator org) with roles `operator` and `customer`; customer orgs get a project grant with `customer` only. Token = JWT access token, audience = project ID; role from Zitadel's project role claim, `customer_id` = the customer's Zitadel organization ID. See `docs\architecture.md` section 2. |
 | UI | Operator console (`portal\`) and a customer portal, same `@yani/ui` style system. |
 | AI interface | `mcp-server`, operator only: thin MCP adapter over the REST APIs. No model calls inside yani itself. |
 | API contract | OpenAPI from FastAPI. TS clients generated, never hand-written. |
@@ -61,7 +62,7 @@ Scaffolded so far:
 - `todo-api\` (FastAPI + Postgres, board columns, cards, inbox; becomes requests). See `todo-api\CLAUDE.md`.
 - `portal\` (`@yani/portal`, becomes the operator console; board page today). See `portal\CLAUDE.md`.
 
-ssot-api and todo-api require a valid token on every `/api/v1` route and scope everything by `customer_id` (slice 1, backend part). The portal has no sign-in yet, so it cannot talk to the APIs until slice 1 part 2. Auth config: root `.env` (see `.env.example`).
+Zitadel runs in compose (`python dev.py up`, then `python dev.py seed` for orgs, project, portal app and test users). ssot-api and todo-api require a valid token on every `/api/v1` route and scope everything by `customer_id` (slice 1, backend part). The portal has no sign-in yet, so it cannot talk to the APIs until slice 1 part 2.
 
 UI style: `docs\style.md` (principles, tokens, scale, for humans). Agent rules distilled in `ui\CLAUDE.md` under Style. Anything visual follows both.
 
@@ -71,5 +72,5 @@ Reference POC (read-only, do not modify): `C:\dev personal\personal-website\.pla
 ## Conventions
 
 - Each component folder gets its own `CLAUDE.md` (stack, run, test, boundaries). Sub-agents read that first.
-- Root helper script: `dev.py` (up, down, seed, logs, test), run as `python dev.py <command>`. Agents use it, not raw docker commands.
+- Root helper script: `dev.py` (up, down, seed, logs, test), run as `python dev.py <command>`. Agents use it, not raw docker commands. `seed` runs `seed_zitadel.py`.
 - Python: ruff, strict Pydantic, type hints everywhere. TS: strict mode.

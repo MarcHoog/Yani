@@ -8,6 +8,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
 COMPOSE = ROOT / "compose.yaml"
+# Zitadel's first start writes the bootstrap service user's token here (bind mount).
+ZITADEL_BOOTSTRAP = ROOT / ".zitadel"
 COMMANDS = ("up", "down", "logs", "test", "seed")
 PACKAGES = ("shared", "ssot-api", "todo-api")
 # Isolation tests run against real databases. They use unique customer ids and clean up after
@@ -39,8 +41,15 @@ def main() -> int:
 
     compose = ["docker", "compose", "-f", str(COMPOSE)]
     if command == "up":
+        ZITADEL_BOOTSTRAP.mkdir(exist_ok=True)
+        if hasattr(os, "getuid"):
+            # Zitadel runs as this user so it can write the token into the bind mount.
+            os.environ.setdefault("UID", str(os.getuid()))
         return run([*compose, "up", "-d", "--build", *rest])
     if command == "down":
+        if "-v" in rest or "--volumes" in rest:
+            # A fresh Zitadel writes a fresh token; the old one would only confuse seed.
+            (ZITADEL_BOOTSTRAP / "bootstrap.pat").unlink(missing_ok=True)
         return run([*compose, "down", *rest])
     if command == "logs":
         return run([*compose, "logs", "-f", *rest])
@@ -60,8 +69,12 @@ def main() -> int:
             if code != 0:
                 return code
         return 0
-    print("No seeder yet.")
-    return 0
+    # seed: bootstrap Zitadel (orgs, project, app, test users), then restart the APIs so they
+    # pick up AUTH_AUDIENCE from .env.
+    code = run([sys.executable, str(ROOT / "seed_zitadel.py"), *rest])
+    if code != 0:
+        return code
+    return run([*compose, "up", "-d", "ssot-api", "todo-api"])
 
 
 if __name__ == "__main__":

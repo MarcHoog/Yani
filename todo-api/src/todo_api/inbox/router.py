@@ -1,3 +1,5 @@
+"""Inbox routes. Reads are scoped to the caller's customer. Writes are operator only."""
+
 from typing import Annotated
 
 from fastapi import APIRouter, Query, status
@@ -28,6 +30,7 @@ async def list_items(
 
 @router.post("", status_code=status.HTTP_201_CREATED)
 async def create_item(conn: ConnDep, caller: CallerDep, payload: InboxItemCreate) -> InboxItemRead:
+    caller.require_operator()
     customer_id = caller.owner(payload.customer_id)
     return InboxItemRead(
         **await service.create_item(conn, customer_id, payload.title, payload.body)
@@ -38,6 +41,7 @@ async def create_item(conn: ConnDep, caller: CallerDep, payload: InboxItemCreate
 async def update_item(
     conn: ConnDep, caller: CallerDep, item_id: str, payload: InboxItemUpdate
 ) -> InboxItemRead:
+    caller.require_operator()
     return InboxItemRead(
         **await service.update_item(
             conn, caller.scope(), item_id, payload.title, payload.position, payload.body
@@ -47,6 +51,7 @@ async def update_item(
 
 @router.delete("/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_item(conn: ConnDep, caller: CallerDep, item_id: str) -> None:
+    caller.require_operator()
     await service.delete_item(conn, caller.scope(), item_id)
 
 
@@ -54,6 +59,7 @@ async def delete_item(conn: ConnDep, caller: CallerDep, item_id: str) -> None:
 async def promote_item(
     conn: ConnDep, caller: CallerDep, item_id: str, payload: InboxPromote
 ) -> CardRead:
+    caller.require_operator()
     return CardRead(**await service.promote_item(conn, caller.scope(), item_id, payload.column_id))
 
 
@@ -61,4 +67,5 @@ async def promote_item(
 async def attach_item(
     conn: ConnDep, caller: CallerDep, item_id: str, payload: InboxAttach
 ) -> CardRead:
+    caller.require_operator()
     return CardRead(**await service.attach_item(conn, caller.scope(), item_id, payload.card_id))

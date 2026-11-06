@@ -16,16 +16,18 @@ service. What exists was built for the personal board; most of it is reusable.
 | `portal` | board page, card panel, inbox | becomes the operator console | routing, inventory and runs pages, sign-in |
 | compose, `dev.py` | neo4j, postgres, both APIs, portal; up, down, logs, test | as is | new services, seed with a fake customer |
 
-Not built: authentication, `automation-api`, adapters, standards and forms, sync, drift, cost,
+Not built: portal sign-in, `automation-api`, adapters, standards and forms, sync, drift, cost,
 customer portal, `mcp-server`.
 
 ## Slices
 
 Each slice is one or more small PRs and ends with something that works end to end.
 
-1. **Auth and tenancy.** OIDC sign-in in the portal, JWT validation in both APIs, operator vs
-   customer role, `customer_id` on every row and node, server-side scoping, tests that a customer
-   token cannot see another customer.
+1. **Auth and tenancy.** Self-hosted Zitadel in compose with a seed (operator org, test customer
+   org, users, project and app). Part 1 (backends): shared auth package, JWT validation via JWKS
+   in both APIs, operator vs customer role from the Zitadel role claim, `customer_id` on every row
+   and node, server-side scoping, tests that a customer token cannot see another customer.
+   Part 2: OIDC sign-in in the portal.
 2. **Inventory model.** New catalog in `ssot-api`, external IDs, seed script with one fake
    customer tenant. Operator console inventory page.
 3. **automation-api skeleton.** Connections (`m365` kind) with encrypted secrets and test, runs
